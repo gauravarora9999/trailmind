@@ -4,7 +4,7 @@ import { XC, GEN_STAGES, img, placeholderBg } from '../data.js';
 
 const SCENE_CITIES = Object.keys(XC);
 
-export default function ExperiencePage({ toast, user }) {
+export default function ExperiencePage({ toast, user, showExplore }) {
   const [selCity, setSelCity] = useState(null);
   const [selAct, setSelAct] = useState(null);
   const [avatars, setAvatars] = useState([]);
@@ -169,7 +169,7 @@ export default function ExperiencePage({ toast, user }) {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 36 }}>
-          <button className="btn btn-ghost" style={{ border: '1px solid var(--color-line)' }} onClick={() => window.history.back()}>&#8592; Back to Explore</button>
+          <button className="btn btn-ghost" style={{ border: '1px solid var(--color-line)' }} onClick={showExplore}>&#8592; Back to Explore</button>
         </div>
       </div>
     </>

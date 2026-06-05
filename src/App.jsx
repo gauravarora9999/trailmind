@@ -148,7 +148,7 @@ export default function App() {
       )}
 
       {page === 'experience' && (
-        <ExperiencePage toast={toast} user={user} />
+        <ExperiencePage toast={toast} user={user} showExplore={showExplore} />
       )}
 
       {page === 'voice' && (
