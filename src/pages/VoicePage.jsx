@@ -1,7 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { money } from '../data.js';
 
-const SILENCE_TIMEOUT = 8000; // 8 seconds of silence before auto-stop
+const SILENCE_TIMEOUT = 8000;
+
+function sanitizeInput(text) {
+  // Strip anything that looks like JSON objects from user input
+  let clean = text.replace(/\{[\s\S]*?\}/g, '').trim();
+  // Strip markdown code fences
+  clean = clean.replace(/```[\s\S]*?```/g, '').trim();
+  // If sanitization removed everything, return a generic message
+  return clean || 'Tell me about a travel destination.';
+}
 
 export default function VoicePage({ openPlanner, showExplore, toast, currency = 'USD', initialMessage = '' }) {
   const [messages, setMessages] = useState([]);
@@ -76,7 +85,6 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
       };
 
       recog.onend = () => {
-        // If still in listening state, the browser auto-stopped — finalize
         setListening(prev => {
           if (prev) {
             const text = finalTranscript.current.trim();
@@ -128,10 +136,27 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
     resetSilenceTimer();
   };
 
+  const newChat = () => {
+    if (synthRef.current) synthRef.current.cancel();
+    setMessages([]);
+    setPlan(null);
+    setInputVal('');
+    setLoading(false);
+    setTranscript('');
+    if (listening) {
+      if (silenceTimer.current) { clearTimeout(silenceTimer.current); silenceTimer.current = null; }
+      if (recognRef.current) try { recognRef.current.stop(); } catch (_) {}
+      setListening(false);
+    }
+  };
+
   const sendMessage = async (text) => {
     if (!text.trim() || loading) return;
 
-    const userMsg = { role: 'user', content: text.trim() };
+    // Sanitize user input — strip JSON and code fences
+    const clean = sanitizeInput(text);
+
+    const userMsg = { role: 'user', content: clean };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInputVal('');
@@ -139,22 +164,45 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
     setLoading(true);
 
     try {
+      // Only send last 8 messages to keep within timeout
+      const toSend = newMessages.slice(-8);
+
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, currency }),
+        body: JSON.stringify({ messages: toSend, currency }),
       });
 
-      const data = await resp.json();
-      const assistantMsg = { role: 'assistant', content: data.message || 'No response received.' };
-      setMessages(prev => [...prev, assistantMsg]);
-      speak(data.message || '');
+      let data;
+      try {
+        data = await resp.json();
+      } catch {
+        data = { message: 'Sorry, I had trouble understanding that. Could you rephrase?', plan: null };
+      }
 
-      if (data.plan) {
+      // Extract clean message text — never show raw JSON to user
+      let msgText = data.message || '';
+      if (msgText.startsWith('{') || msgText.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(msgText);
+          msgText = parsed.message || 'I can help you plan a trip. Where would you like to go?';
+        } catch {
+          msgText = 'I can help you plan a trip. Where would you like to go?';
+        }
+      }
+      // Strip any remaining JSON fragments
+      msgText = msgText.replace(/\{[\s\S]*?\}/g, '').replace(/```[\s\S]*?```/g, '').trim();
+      if (!msgText) msgText = 'I can help you plan a trip. Where would you like to go?';
+
+      const assistantMsg = { role: 'assistant', content: msgText };
+      setMessages(prev => [...prev, assistantMsg]);
+      speak(msgText);
+
+      if (data.plan && typeof data.plan === 'object' && data.plan.city) {
         setPlan(data.plan);
       }
     } catch (err) {
-      const errMsg = 'Connection failed: ' + err.message;
+      const errMsg = 'Connection failed. Please try again.';
       toast(errMsg);
       setMessages(prev => [...prev, { role: 'assistant', content: errMsg }]);
     } finally {
@@ -176,6 +224,15 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
         <div className="pv-header">
           <div className="live" style={{ justifyContent: 'center' }}>Trailmind AI Planner</div>
           <p className="pv-sub">Tell me about your dream trip and I'll build a detailed, costed itinerary.</p>
+          {messages.length > 0 && (
+            <button className="pv-new-chat" onClick={newChat} title="Start a new conversation">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              New chat
+            </button>
+          )}
         </div>
 
         <div className="pv-chat">
@@ -243,13 +300,13 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
               </div>
             </div>
 
-            {plan.itinerary.map((day) => (
+            {plan.itinerary && plan.itinerary.map((day) => (
               <div className="pv-day" key={day.day}>
                 <div className="pv-day-header">
                   <span className="pv-day-num">Day {day.day}</span>
                   <span className="pv-day-theme">{day.theme}</span>
                 </div>
-                {day.activities.map((act, ai) => (
+                {day.activities && day.activities.map((act, ai) => (
                   <div className="pv-act" key={ai}>
                     <div className="pv-act-time">{act.time}</div>
                     <div className="pv-act-body">
@@ -262,23 +319,25 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
               </div>
             ))}
 
-            <div className="pv-breakdown">
-              <h4>Cost estimate (per person)</h4>
-              <div className="pv-brk-row"><span>Activities</span><b>~{m(plan.breakdown.activities)}</b></div>
-              <div className="pv-brk-row"><span>Accommodation ({plan.nights} nights)</span><b>~{m(plan.breakdown.accommodation)}</b></div>
-              <div className="pv-brk-row"><span>Food</span><b>~{m(plan.breakdown.food)}</b></div>
-              <div className="pv-brk-row"><span>Transport</span><b>~{m(plan.breakdown.transport)}</b></div>
-              <div className="pv-brk-row"><span>Buffer (10%)</span><b>~{m(plan.breakdown.buffer)}</b></div>
-              <div className="pv-brk-total"><span>Total per person</span><span>~{m(plan.breakdown.total)}</span></div>
-              {plan.travellers > 1 && (
-                <div className="pv-brk-row" style={{ marginTop: 8 }}>
-                  <span>x{plan.travellers} travellers</span>
-                  <b style={{ color: 'var(--color-coral)' }}>~{m(plan.breakdown.total * plan.travellers)}</b>
-                </div>
-              )}
-            </div>
+            {plan.breakdown && (
+              <div className="pv-breakdown">
+                <h4>Cost estimate (per person)</h4>
+                <div className="pv-brk-row"><span>Activities</span><b>~{m(plan.breakdown.activities)}</b></div>
+                <div className="pv-brk-row"><span>Accommodation ({plan.nights} nights)</span><b>~{m(plan.breakdown.accommodation)}</b></div>
+                <div className="pv-brk-row"><span>Food</span><b>~{m(plan.breakdown.food)}</b></div>
+                <div className="pv-brk-row"><span>Transport</span><b>~{m(plan.breakdown.transport)}</b></div>
+                <div className="pv-brk-row"><span>Buffer (10%)</span><b>~{m(plan.breakdown.buffer)}</b></div>
+                <div className="pv-brk-total"><span>Total per person</span><span>~{m(plan.breakdown.total)}</span></div>
+                {plan.travellers > 1 && (
+                  <div className="pv-brk-row" style={{ marginTop: 8 }}>
+                    <span>x{plan.travellers} travellers</span>
+                    <b style={{ color: 'var(--color-coral)' }}>~{m(plan.breakdown.total * plan.travellers)}</b>
+                  </div>
+                )}
+              </div>
+            )}
 
-            {plan.accommodation && (
+            {plan.accommodation && plan.accommodation.length > 0 && (
               <div className="pv-stays">
                 <h4>Where to stay</h4>
                 {plan.accommodation.map((h, i) => (
