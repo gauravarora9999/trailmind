@@ -52,7 +52,7 @@ export default function App() {
     scrollTop();
   };
   const showExperience = () => { setPage('experience'); scrollTop(); };
-  const showVoicePage = (initMsg) => { setVoiceInitMsg(initMsg || ''); setPage('voice'); scrollTop(); };
+  const showVoicePage = (initMsg) => { setVoiceInitMsg(typeof initMsg === 'string' ? initMsg : ''); setPage('voice'); scrollTop(); };
   const showAbout = () => { setPage('about'); scrollTop(); };
   const showContact = () => { setPage('contact'); scrollTop(); };
 
