@@ -703,12 +703,19 @@ nav.site-nav {
 .pv-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin: 8px 0 0; }
 .pv-new-chat {
   display: inline-flex; align-items: center; gap: 6px;
-  margin-top: 12px; padding: 6px 16px;
+  padding: 6px 16px;
   background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
   color: rgba(255,255,255,0.7); border-radius: 20px; font-size: 13px; font-weight: 600;
   transition: all .2s;
 }
 .pv-new-chat:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.pv-progress { display: flex; gap: 8px; align-items: center; }
+.pv-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); transition: all .3s;
+}
+.pv-dot.done { background: #F59E0B; }
+.pv-dot.current { background: #FF5B3A; width: 22px; border-radius: 4px; }
 
 /* Chat area */
 .pv-chat {
