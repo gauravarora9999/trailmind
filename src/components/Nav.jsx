@@ -1,4 +1,4 @@
-export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, user, openAuth }) {
+export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, user, openAuth, logout }) {
   return (
     <nav className="site-nav">
       <div className="wrap nav-in">
@@ -18,6 +18,7 @@ export default function Nav({ showExplore, showPlanner, showExperience, showVoic
             <div className="nav-user">
               <div className="uav">{user.name.charAt(0).toUpperCase()}</div>
               <span className="uname">{user.name}</span>
+              <button className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: '12px', marginLeft: 8 }} onClick={logout}>Log out</button>
             </div>
           ) : (
             <>

@@ -1,16 +1,31 @@
 import { useState } from 'react';
+import { supabase } from '../supabase.js';
 
 export default function ContactPage({ toast }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [msg, setMsg] = useState('');
+  const [sending, setSending] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast('Message sent — we will be in touch!');
-    setName('');
-    setEmail('');
-    setMsg('');
+    setSending(true);
+    try {
+      const { error } = await supabase.from('contact_messages').insert({
+        name,
+        email,
+        message: msg
+      });
+      if (error) throw error;
+      toast('Message sent — we will be in touch!');
+      setName('');
+      setEmail('');
+      setMsg('');
+    } catch (err) {
+      toast('Send failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -47,8 +62,8 @@ export default function ContactPage({ toast }) {
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
           />
-          <button className="btn btn-coral" type="submit" style={{ alignSelf: 'flex-start' }}>
-            Send message
+          <button className="btn btn-coral" type="submit" disabled={sending} style={{ alignSelf: 'flex-start', opacity: sending ? 0.6 : 1 }}>
+            {sending ? 'Sending...' : 'Send message'}
           </button>
         </form>
       </div>

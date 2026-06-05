@@ -1,15 +1,17 @@
 import { useState } from 'react';
+import { supabase } from '../supabase.js';
 import { XC, GEN_STAGES, img, placeholderBg } from '../data.js';
 
 const SCENE_CITIES = Object.keys(XC);
 
-export default function ExperiencePage({ toast }) {
+export default function ExperiencePage({ toast, user }) {
   const [selCity, setSelCity] = useState(null);
   const [selAct, setSelAct] = useState(null);
   const [avatars, setAvatars] = useState([]);
   const [generating, setGenerating] = useState(false);
   const [genStage, setGenStage] = useState(0);
   const [result, setResult] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const addAvatars = (e) => {
     [...e.target.files].forEach(f => {
@@ -139,7 +141,25 @@ export default function ExperiencePage({ toast }) {
                   <p>{avatars.length ? avatars.length + ' avatar(s)' : 'Sample avatars'} placed {result.s}.</p>
                 </div>
                 <div className="acts">
-                  <button className="btn btn-ghost" style={{ border: '1px solid var(--color-line)' }} onClick={() => toast('Saved to your gallery')}>Save</button>
+                  <button className="btn btn-ghost" style={{ border: '1px solid var(--color-line)', opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={async () => {
+                    if (!user) { toast('Sign in to save previews'); return; }
+                    setSaving(true);
+                    try {
+                      const { error } = await supabase.from('experience_previews').insert({
+                        user_id: user.id,
+                        city: selCity,
+                        activity_title: result.t,
+                        scene_description: result.s,
+                        image_url: img(result.q)
+                      });
+                      if (error) throw error;
+                      toast('Saved to your gallery');
+                    } catch (err) {
+                      toast('Save failed: ' + (err.message || 'Unknown error'));
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}>{saving ? 'Saving...' : 'Save'}</button>
                   <button className="btn btn-ghost" style={{ border: '1px solid var(--color-line)' }} onClick={() => toast('Shareable link copied')}>Share</button>
                   <button className="btn btn-coral" onClick={() => toast('Added to your itinerary')}>Add to trip</button>
                 </div>

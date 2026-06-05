@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { supabase } from '../supabase.js';
 import { VQ, CITIES, pickRegionFrom, mapBudgetTier, PL_STAGES } from '../data.js';
 
-export default function VoicePage({ openPlanner, showExplore, toast }) {
+export default function VoicePage({ openPlanner, showExplore, toast, user }) {
   const [vIdx, setVIdx] = useState(0);
   const [vAns, setVAns] = useState({});
   const [listening, setListening] = useState(false);
@@ -94,6 +95,27 @@ export default function VoicePage({ openPlanner, showExplore, toast }) {
       setGenStage(s);
       if (s >= PL_STAGES.length) {
         clearInterval(iv);
+
+        if (user) {
+          supabase.from('saved_trips').insert({
+            user_id: user.id,
+            source: 'voice',
+            city_name: city.name,
+            country: city.country,
+            region: city.region,
+            tier,
+            voice_answers: {
+              trip_style: vAns[0] || '',
+              duration: vAns[1] || '',
+              budget: vAns[2] || '',
+              travel_group: vAns[3] || '',
+              must_haves: vAns[4] || ''
+            }
+          }).then(({ error }) => {
+            if (error) console.error('Voice save failed:', error.message);
+          });
+        }
+
         openPlanner(city.name, city.acts.map(a => a.t), tier);
       }
     }, 700);

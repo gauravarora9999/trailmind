@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { supabase } from './supabase.js';
 
 import Nav from './components/Nav.jsx';
 import Footer from './components/Footer.jsx';
@@ -37,6 +38,39 @@ export default function App() {
     toastTimer.current = setTimeout(() => setToastMsg(''), 2200);
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.name || 'Traveller',
+          email: session.user.email
+        });
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setUser({
+          id: session.user.id,
+          name: session.user.user_metadata.name || 'Traveller',
+          email: session.user.email
+        });
+        toast('Signed in as ' + (session.user.user_metadata.name || 'Traveller'));
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [toast]);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    toast('Signed out');
+  };
+
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   const showExplore = () => { setPage('explore'); scrollTop(); };
@@ -56,11 +90,6 @@ export default function App() {
 
   const openAuth = (mode) => setAuthMode(mode);
   const closeAuth = () => setAuthMode(null);
-  const submitAuth = (name, email) => {
-    setUser({ name, email });
-    setAuthMode(null);
-    toast('Signed in as ' + name);
-  };
 
   const onToggleAct = (title) => {
     setTrip((prev) =>
@@ -78,7 +107,7 @@ export default function App() {
 
   return (
     <>
-      <Nav {...navFns} user={user} openAuth={openAuth} />
+      <Nav {...navFns} user={user} openAuth={openAuth} logout={logout} />
 
       {page === 'explore' && (
         <ExplorePage
@@ -114,11 +143,12 @@ export default function App() {
           setPlannerPax={setPlannerPax}
           showExplore={showExplore}
           toast={toast}
+          user={user}
         />
       )}
 
       {page === 'experience' && (
-        <ExperiencePage toast={toast} />
+        <ExperiencePage toast={toast} user={user} />
       )}
 
       {page === 'voice' && (
@@ -126,6 +156,7 @@ export default function App() {
           openPlanner={openPlanner}
           showExplore={showExplore}
           toast={toast}
+          user={user}
         />
       )}
 
@@ -141,7 +172,6 @@ export default function App() {
         <AuthModal
           mode={authMode}
           onClose={closeAuth}
-          onSubmit={submitAuth}
           onSwap={(m) => setAuthMode(m)}
         />
       )}

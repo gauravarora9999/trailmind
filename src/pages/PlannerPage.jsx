@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../supabase.js';
 import {
   CITIES, TIER_NAMES, TIERS, PL_STAGES, DAY_THEMES, DAY_TIMES,
   computeTrip, actCost, cityIdx, money
@@ -7,11 +8,12 @@ import {
 export default function PlannerPage({
   plannerCity, plannerTier, plannerPax, plannerSelections,
   setPlannerCity, setPlannerTier, setPlannerPax,
-  showExplore, toast
+  showExplore, toast, user
 }) {
   const [generating, setGenerating] = useState(false);
   const [stage, setStage] = useState(0);
   const [plan, setPlan] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (plannerSelections && plannerSelections.length > 0 && plannerCity) {
@@ -186,7 +188,42 @@ export default function PlannerPage({
                   })}
                 </div>
 
-                <button className="btn btn-coral" style={{ width: '100%', justifyContent: 'center' }} onClick={() => toast('Trip saved')}>Save this trip</button>
+                <button className="btn btn-coral" style={{ width: '100%', justifyContent: 'center', opacity: saving ? 0.6 : 1 }} disabled={saving} onClick={async () => {
+                  if (!user) { toast('Sign in to save trips'); return; }
+                  setSaving(true);
+                  try {
+                    const { error } = await supabase.from('saved_trips').insert({
+                      user_id: user.id,
+                      source: 'planner',
+                      city_name: plan.city.name,
+                      country: plan.city.country,
+                      region: plan.city.region,
+                      tier: plan.tier,
+                      pax,
+                      score: plan.score,
+                      total_cost_pp: plan.calc.total,
+                      total_cost_group: plan.calc.total * pax,
+                      days_count: plan.calc.days,
+                      nights_count: plan.calc.nights,
+                      cost_breakdown: {
+                        activities: plan.calc.activities,
+                        stay: plan.calc.stay,
+                        food: plan.calc.food,
+                        transport: plan.calc.transport,
+                        buffer: plan.calc.buffer,
+                        total: plan.calc.total
+                      },
+                      plan_days: plan.days,
+                      selected_activities: plan.selected.map(a => ({ t: a.t, type: a.type, time: a.time }))
+                    });
+                    if (error) throw error;
+                    toast('Trip saved');
+                  } catch (err) {
+                    toast('Save failed: ' + (err.message || 'Unknown error'));
+                  } finally {
+                    setSaving(false);
+                  }
+                }}>{saving ? 'Saving...' : 'Save this trip'}</button>
                 <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-line)', marginTop: 10 }} onClick={() => toast('PDF export ready')}>Export as PDF</button>
               </div>
             </div>
