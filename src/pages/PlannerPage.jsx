@@ -97,7 +97,7 @@ export default function PlannerPage({
             <label>BUDGET STYLE</label>
             <div className="seg">
               {TIER_NAMES.map(t => (
-                <button key={t} className={tier === t ? 'on' : ''} onClick={() => setPlannerTier(t)}>{t}</button>
+                <button key={t} className={tier === t ? 'active' : ''} onClick={() => setPlannerTier(t)}>{t}</button>
               ))}
             </div>
           </div>

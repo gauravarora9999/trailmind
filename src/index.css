@@ -97,6 +97,12 @@ nav.site-nav {
   font-weight: 700; font-size: 13px;
 }
 .nav-user .uname { font-size: 14px; font-weight: 600; }
+.cur-sel {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--color-line);
+  font-size: 13px; font-weight: 600; background: var(--color-sand);
+  color: var(--color-ink); cursor: pointer; outline: none;
+}
+.cur-sel:focus { border-color: var(--color-coral); }
 
 /* ═══════════════════════════════════════
    HERO HOME + VOICE CARD
@@ -538,14 +544,27 @@ nav.site-nav {
   border-radius: var(--radius-card); padding: 24px; margin-bottom: 16px;
 }
 .pcard h3 { font-weight: 900; font-size: 16px; letter-spacing: -0.3px; margin-bottom: 16px; }
+.pcard h4 { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 14px; }
+.brk .r { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+.brk .r span { color: var(--color-gray); }
+.brk .r b { font-weight: 800; color: var(--color-ink); }
+.brk .tot {
+  display: flex; justify-content: space-between; padding: 12px 0 0;
+  margin-top: 8px; border-top: 2px solid var(--color-line);
+  font-size: 16px; font-weight: 900;
+}
 .stay-opt {
   padding: 14px; border-radius: 12px;
   border: 1.5px solid var(--color-line); margin-bottom: 10px;
   cursor: pointer; transition: border-color 0.2s;
 }
 .stay-opt:hover { border-color: var(--color-coral); }
+.stay-opt.sel { border-color: var(--color-coral); background: rgba(255,91,58,0.04); }
 .stay-opt h4 { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
 .stay-opt p { font-size: 13px; color: var(--color-gray); }
+.so-n { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+.so-s { font-size: 13px; color: var(--color-gray); }
+.so-p { font-weight: 800; font-size: 15px; text-align: right; white-space: nowrap; }
 
 /* ═══════════════════════════════════════
    EXPERIENCE CENTER
@@ -738,6 +757,40 @@ nav.site-nav {
   font-size: 12px; font-weight: 800;
 }
 .pv-step.done .num { background: var(--color-forest); }
+
+/* ── Voice card enhancements ── */
+.vc-input-wrap {
+  position: relative; width: 100%;
+}
+.vc-input {
+  width: 100%; padding: 12px 48px 12px 16px; border-radius: var(--radius-input);
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
+  color: #fff; font-size: 14px; outline: none;
+  transition: border-color 0.2s; box-sizing: border-box;
+}
+.vc-input::placeholder { color: rgba(255,255,255,0.35); }
+.vc-input:focus { border-color: var(--color-coral); }
+.vc-mic-btn {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.vc-mic-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.vc-mic-btn.active { background: var(--color-coral); color: #fff; animation: pulseDot 1.2s infinite; }
+.vc-suggestions {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;
+}
+.vc-suggestions button {
+  padding: 8px 16px; border-radius: var(--radius-pill);
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7); font-size: 13px; cursor: pointer;
+  transition: all 0.2s;
+}
+.vc-suggestions button:hover {
+  background: rgba(255,255,255,0.12); border-color: var(--color-coral); color: #fff;
+}
 
 /* ═══════════════════════════════════════
    ABOUT
