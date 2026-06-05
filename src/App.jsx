@@ -29,6 +29,7 @@ export default function App() {
   const [plannerPax, setPlannerPax] = useState(2);
   const [plannerSelections, setPlannerSelections] = useState([]);
   const [currency, setCurrency] = useState('USD');
+  const [voiceInitMsg, setVoiceInitMsg] = useState('');
 
   const toastTimer = useRef(null);
 
@@ -51,7 +52,7 @@ export default function App() {
     scrollTop();
   };
   const showExperience = () => { setPage('experience'); scrollTop(); };
-  const showVoicePage = () => { setPage('voice'); scrollTop(); };
+  const showVoicePage = (initMsg) => { setVoiceInitMsg(initMsg || ''); setPage('voice'); scrollTop(); };
   const showAbout = () => { setPage('about'); scrollTop(); };
   const showContact = () => { setPage('contact'); scrollTop(); };
 
@@ -129,6 +130,8 @@ export default function App() {
           openPlanner={openPlanner}
           showExplore={showExplore}
           toast={toast}
+          currency={currency}
+          initialMessage={voiceInitMsg}
         />
       )}
 
