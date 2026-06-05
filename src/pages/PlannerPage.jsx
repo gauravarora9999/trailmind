@@ -7,8 +7,9 @@ import {
 export default function PlannerPage({
   plannerCity, plannerTier, plannerPax, plannerSelections,
   setPlannerCity, setPlannerTier, setPlannerPax,
-  showExplore, toast
+  showExplore, toast, currency = 'USD'
 }) {
+  const m = (n) => money(n, currency);
   const [generating, setGenerating] = useState(false);
   const [stage, setStage] = useState(0);
   const [plan, setPlan] = useState(null);
@@ -133,7 +134,7 @@ export default function PlannerPage({
                     <div className="dh">
                       <div className="dn">{di + 1}</div>
                       <div className="dt">{d.label}</div>
-                      <div className="dtag">{money(d.dayCost)} activities</div>
+                      <div className="dtag">{m(d.dayCost)} activities</div>
                     </div>
                     <div className="di">
                       {d.acts.map((a, ai) => (
@@ -143,7 +144,7 @@ export default function PlannerPage({
                             <div className="an">{a.t}</div>
                             <div className="am">{a.type} &#183; {a.time}</div>
                           </div>
-                          <div className="acost">{a.cost === 0 ? 'Free' : '~' + money(a.cost)}</div>
+                          <div className="acost">{a.cost === 0 ? 'Free' : '~' + m(a.cost)}</div>
                         </div>
                       ))}
                     </div>
@@ -155,16 +156,16 @@ export default function PlannerPage({
                 <div className="pcard">
                   <h4>Cost breakdown (estimate)</h4>
                   <div className="brk">
-                    <div className="r"><span>Activities &amp; entries</span><b>~{money(plan.calc.activities)}</b></div>
-                    <div className="r"><span>Stay ({plan.calc.nights} nights)</span><b>~{money(plan.calc.stay)}</b></div>
-                    <div className="r"><span>Food</span><b>~{money(plan.calc.food)}</b></div>
-                    <div className="r"><span>Local transport</span><b>~{money(plan.calc.transport)}</b></div>
-                    <div className="r"><span>Buffer (10%)</span><b>~{money(plan.calc.buffer)}</b></div>
-                    <div className="tot"><span>Per person</span><span>~{money(plan.calc.total)}</span></div>
+                    <div className="r"><span>Activities &amp; entries</span><b>~{m(plan.calc.activities)}</b></div>
+                    <div className="r"><span>Stay ({plan.calc.nights} nights)</span><b>~{m(plan.calc.stay)}</b></div>
+                    <div className="r"><span>Food</span><b>~{m(plan.calc.food)}</b></div>
+                    <div className="r"><span>Local transport</span><b>~{m(plan.calc.transport)}</b></div>
+                    <div className="r"><span>Buffer (10%)</span><b>~{m(plan.calc.buffer)}</b></div>
+                    <div className="tot"><span>Per person</span><span>~{m(plan.calc.total)}</span></div>
                     {pax > 1 && (
                       <div className="r" style={{ marginTop: 6 }}>
                         <span>&#215; {pax} travellers</span>
-                        <b style={{ color: 'var(--color-coral)' }}>~{money(plan.calc.total * pax)}</b>
+                        <b style={{ color: 'var(--color-coral)' }}>~{m(plan.calc.total * pax)}</b>
                       </div>
                     )}
                   </div>
@@ -180,7 +181,7 @@ export default function PlannerPage({
                           <div className="so-n">{s[0]}</div>
                           <div className="so-s">{s[1]}</div>
                         </div>
-                        <div className="so-p">~{money(price)}<span style={{ color: 'var(--color-gray)', fontWeight: 500 }}>/night</span></div>
+                        <div className="so-p">~{m(price)}<span style={{ color: 'var(--color-gray)', fontWeight: 500 }}>/night</span></div>
                       </div>
                     );
                   })}

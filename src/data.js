@@ -14,8 +14,29 @@ export function placeholderBg(seed) {
   return `linear-gradient(135deg,${c},${c2})`;
 }
 
-// ── Money formatter ──
-export function money(n) { return '$' + n.toLocaleString('en-US'); }
+// ═══════════════════════════════════════
+// CURRENCIES
+// ═══════════════════════════════════════
+export const CURRENCIES = {
+  USD: { symbol: '$',  code: 'USD', rate: 1.0,    locale: 'en-US',  name: 'US Dollar' },
+  EUR: { symbol: '€',  code: 'EUR', rate: 0.92,   locale: 'de-DE',  name: 'Euro' },
+  GBP: { symbol: '£',  code: 'GBP', rate: 0.79,   locale: 'en-GB',  name: 'British Pound' },
+  AED: { symbol: 'د.إ', code: 'AED', rate: 3.67,  locale: 'ar-AE',  name: 'UAE Dirham' },
+  INR: { symbol: '₹',  code: 'INR', rate: 83.5,   locale: 'en-IN',  name: 'Indian Rupee' },
+  JPY: { symbol: '¥',  code: 'JPY', rate: 157.0,  locale: 'ja-JP',  name: 'Japanese Yen' },
+  SGD: { symbol: 'S$', code: 'SGD', rate: 1.35,   locale: 'en-SG',  name: 'Singapore Dollar' },
+  THB: { symbol: '฿',  code: 'THB', rate: 35.5,   locale: 'th-TH',  name: 'Thai Baht' },
+  ZAR: { symbol: 'R',  code: 'ZAR', rate: 18.2,   locale: 'en-ZA',  name: 'South African Rand' },
+};
+export const CURRENCY_CODES = Object.keys(CURRENCIES);
+
+// ── Money formatter (currency-aware) ──
+export function money(n, cur = 'USD') {
+  const c = CURRENCIES[cur] || CURRENCIES.USD;
+  const converted = Math.round(n * c.rate);
+  if (cur === 'JPY') return c.symbol + converted.toLocaleString('ja-JP');
+  return c.symbol + converted.toLocaleString(c.locale, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
 
 // ═══════════════════════════════════════
 // CITIES — 12 cities, 5 activities each
@@ -131,6 +152,24 @@ export const VQ = [
   {q:'Who\'s coming with you?', chips:['Solo','Couple','Family','Friends group']},
   {q:'Any must-haves?', chips:['Great food scene','Adventure sports','Historical sites','Nightlife','Nature & wildlife']},
 ];
+
+// ── Voice answer validators (keyword sets per question) ──
+const VQ_KEYWORDS = [
+  /* Q0 trip type */ ['beach','mountain','trek','city','safari','wildlife','food','culture','adventure','island','desert','snow','ski','road','wellness','yoga','relax','explore','backpack','dive','surf','hike','camp','cruise','historical','ancient','spiritual','photography','honeymoon','romantic','nature','outdoor','diving','climbing','temple','sightseeing','getaway','holiday','vacation','travel','trip','tour'],
+  /* Q1 duration */ ['day','days','week','weeks','weekend','month','night','nights','open','flexible','1','2','3','4','5','6','7','10','14','long','short','ended','few'],
+  /* Q2 budget  */ ['budget','cheap','affordable','mid','medium','moderate','comfort','luxury','premium','expensive','splurge','high','backpack','hostel','star','range','low','fancy','five','economy','frugal','all the way','friendly'],
+  /* Q3 who     */ ['solo','alone','myself','couple','partner','wife','husband','girlfriend','boyfriend','family','kid','kids','children','friend','friends','group','team','colleague','two','three','four','us','we','me','single'],
+  /* Q4 must-haves */ ['food','restaurant','adventure','sport','history','historical','museum','nightlife','club','bar','nature','wildlife','animal','beach','shopping','photography','art','music','spa','wellness','architecture','temple','church','market','street','hiking','diving','snorkel','wine','culture','scenic','view','waterfall'],
+];
+
+export function validateVoiceAnswer(qIdx, text) {
+  if (qIdx < 0 || qIdx >= VQ_KEYWORDS.length) return true;
+  const lower = text.toLowerCase();
+  // Also accept if the answer matches any of the chip options for this question
+  const chips = VQ[qIdx].chips.map(c => c.toLowerCase());
+  if (chips.some(chip => lower.includes(chip) || chip.includes(lower))) return true;
+  return VQ_KEYWORDS[qIdx].some(kw => lower.includes(kw));
+}
 
 // ═══════════════════════════════════════
 // COST ENGINE

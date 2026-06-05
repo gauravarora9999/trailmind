@@ -89,6 +89,12 @@ nav.site-nav {
 }
 .nav-links a:hover { color: var(--color-ink); }
 .nav-cta { display: flex; align-items: center; gap: 12px; }
+.cur-sel {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--color-line);
+  font-size: 13px; font-weight: 600; background: var(--color-sand);
+  color: var(--color-ink); cursor: pointer; outline: none;
+}
+.cur-sel:focus { border-color: var(--color-coral); }
 .nav-user { display: flex; align-items: center; gap: 10px; }
 .nav-user .uav {
   width: 34px; height: 34px; border-radius: 50%;
@@ -207,14 +213,26 @@ nav.site-nav {
   background: rgba(255,255,255,0.25);
 }
 .vc-dots i.active { background: var(--color-coral); }
+.vc-input-wrap {
+  position: relative; width: 100%;
+}
 .vc-input {
-  width: 100%; padding: 12px 16px; border-radius: var(--radius-input);
+  width: 100%; padding: 12px 48px 12px 16px; border-radius: var(--radius-input);
   border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
   color: #fff; font-size: 14px; outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s; box-sizing: border-box;
 }
 .vc-input::placeholder { color: rgba(255,255,255,0.35); }
 .vc-input:focus { border-color: var(--color-coral); }
+.vc-mic-btn {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.vc-mic-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.vc-mic-btn.active { background: var(--color-coral); color: #fff; animation: pulseDot 1.2s infinite; }
 .vc-summary {
   margin-top: 20px; padding: 16px; border-radius: 12px;
   background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
@@ -710,14 +728,26 @@ nav.site-nav {
   background: rgba(255,255,255,0.25);
 }
 .pv-dots i.active { background: var(--color-coral); }
+.pv-input-wrap {
+  position: relative; width: 100%; max-width: 420px; margin: 0 auto;
+}
 .pv-input {
-  width: 100%; padding: 14px 18px; border-radius: var(--radius-input);
+  width: 100%; padding: 14px 52px 14px 18px; border-radius: var(--radius-input);
   border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06);
   color: #fff; font-size: 15px; outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s; box-sizing: border-box;
 }
 .pv-input::placeholder { color: rgba(255,255,255,0.35); }
 .pv-input:focus { border-color: var(--color-coral); }
+.pv-mic-btn {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.pv-mic-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+.pv-mic-btn.active { background: var(--color-coral); color: #fff; animation: pulseDot 1.2s infinite; }
 
 /* Voice Plan Steps */
 .pv-steps {

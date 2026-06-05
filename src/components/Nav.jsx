@@ -1,4 +1,6 @@
-export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, user, openAuth }) {
+import { CURRENCY_CODES, CURRENCIES } from '../data.js';
+
+export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, user, openAuth, currency, setCurrency }) {
   return (
     <nav className="site-nav">
       <div className="wrap nav-in">
@@ -14,6 +16,15 @@ export default function Nav({ showExplore, showPlanner, showExperience, showVoic
         </div>
 
         <div className="nav-cta">
+          <select
+            className="cur-sel"
+            value={currency}
+            onChange={e => setCurrency(e.target.value)}
+          >
+            {CURRENCY_CODES.map(c => (
+              <option key={c} value={c}>{CURRENCIES[c].symbol} {c}</option>
+            ))}
+          </select>
           {user ? (
             <div className="nav-user">
               <div className="uav">{user.name.charAt(0).toUpperCase()}</div>

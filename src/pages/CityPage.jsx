@@ -2,8 +2,9 @@ import { CITIES, TIER_NAMES, TIERS, img, placeholderBg, actCost, computeTrip, ci
 
 export default function CityPage({
   cityName, trip, tripTier, onTierChange, onToggleAct, onRemoveTrip,
-  onPlanTrip, showExplore, toast
+  onPlanTrip, showExplore, toast, currency = 'USD'
 }) {
+  const m = (n) => money(n, currency);
   const city = CITIES.find(c => c.name === cityName);
   if (!city) {
     return (
@@ -69,7 +70,7 @@ export default function CityPage({
                       <span className="chip">{a.time}</span>
                       <span className="rating">&#9733; {a.rating}</span>
                       <span style={{ marginLeft: 'auto', fontWeight: 800, fontSize: '14px', color: 'var(--color-forest)' }}>
-                        {cost === 0 ? 'Free' : `~${money(cost)}`}
+                        {cost === 0 ? 'Free' : `~${m(cost)}`}
                       </span>
                     </div>
                   </div>
@@ -121,7 +122,7 @@ export default function CityPage({
                       <span style={{ fontWeight: 700 }}>{a.t}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontWeight: 800, color: 'var(--color-forest)', fontSize: '13px' }}>
-                          ~{money(actCost(a.type, tripTier, cidx))}
+                          ~{m(actCost(a.type, tripTier, cidx))}
                         </span>
                         <button
                           onClick={() => onRemoveTrip(a.t)}
@@ -147,19 +148,19 @@ export default function CityPage({
                     <div className="box"><b>{tripActs.length}</b><span>activities</span></div>
                   </div>
                   <div className="brk">
-                    <div className="r"><span>Activities &amp; entries</span><b>~{money(calc.activities)}</b></div>
-                    <div className="r"><span>Stay ({calc.nights} nights)</span><b>~{money(calc.stay)}</b></div>
-                    <div className="r"><span>Food</span><b>~{money(calc.food)}</b></div>
-                    <div className="r"><span>Local transport</span><b>~{money(calc.transport)}</b></div>
-                    <div className="r"><span>Buffer (10%)</span><b>~{money(calc.buffer)}</b></div>
-                    <div className="tot"><span>Est. total / person</span><span>~{money(calc.total)}</span></div>
+                    <div className="r"><span>Activities &amp; entries</span><b>~{m(calc.activities)}</b></div>
+                    <div className="r"><span>Stay ({calc.nights} nights)</span><b>~{m(calc.stay)}</b></div>
+                    <div className="r"><span>Food</span><b>~{m(calc.food)}</b></div>
+                    <div className="r"><span>Local transport</span><b>~{m(calc.transport)}</b></div>
+                    <div className="r"><span>Buffer (10%)</span><b>~{m(calc.buffer)}</b></div>
+                    <div className="tot"><span>Est. total / person</span><span>~{m(calc.total)}</span></div>
                   </div>
 
                   {/* Suggested stay */}
                   <div className="stay-pick">
                     <div className="lbl">SUGGESTED STAY &middot; {tripTier.toUpperCase()}</div>
                     <div className="name">{calc.stays[0][0]}</div>
-                    <div style={{ color: 'var(--color-gray)' }}>{calc.stays[0][1]} &middot; ~{money(Math.round(TIERS[tripTier].stayBase * calc.cidx))}/night</div>
+                    <div style={{ color: 'var(--color-gray)' }}>{calc.stays[0][1]} &middot; ~{m(Math.round(TIERS[tripTier].stayBase * calc.cidx))}/night</div>
                   </div>
 
                   <button

@@ -28,6 +28,7 @@ export default function App() {
   const [plannerTier, setPlannerTier] = useState('Mid-range');
   const [plannerPax, setPlannerPax] = useState(2);
   const [plannerSelections, setPlannerSelections] = useState([]);
+  const [currency, setCurrency] = useState('USD');
 
   const toastTimer = useRef(null);
 
@@ -78,7 +79,7 @@ export default function App() {
 
   return (
     <>
-      <Nav {...navFns} user={user} openAuth={openAuth} />
+      <Nav {...navFns} user={user} openAuth={openAuth} currency={currency} setCurrency={setCurrency} />
 
       {page === 'explore' && (
         <ExplorePage
@@ -100,6 +101,7 @@ export default function App() {
           onPlanTrip={onPlanTrip}
           showExplore={showExplore}
           toast={toast}
+          currency={currency}
         />
       )}
 
@@ -114,6 +116,7 @@ export default function App() {
           setPlannerPax={setPlannerPax}
           showExplore={showExplore}
           toast={toast}
+          currency={currency}
         />
       )}
 

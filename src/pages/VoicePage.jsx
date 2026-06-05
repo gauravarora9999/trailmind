@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { VQ, CITIES, pickRegionFrom, mapBudgetTier, PL_STAGES } from '../data.js';
+import { VQ, CITIES, pickRegionFrom, mapBudgetTier, PL_STAGES, validateVoiceAnswer } from '../data.js';
 
 export default function VoicePage({ openPlanner, showExplore, toast }) {
   const [vIdx, setVIdx] = useState(0);
@@ -58,6 +58,16 @@ export default function VoicePage({ openPlanner, showExplore, toast }) {
 
   const answer = (text) => {
     if (done) return;
+
+    // Validate the answer is relevant to the question
+    if (!validateVoiceAnswer(vIdx, text)) {
+      toast('That doesn\'t seem to match the question. Try again or pick an option.');
+      setTranscript('');
+      setListening(false);
+      if (recognRef.current) try { recognRef.current.stop(); } catch (_) {}
+      return;
+    }
+
     setVAns(prev => ({ ...prev, [vIdx]: text }));
     setTranscript('');
     setInputVal('');
@@ -128,13 +138,27 @@ export default function VoicePage({ openPlanner, showExplore, toast }) {
               {VQ.map((_, i) => <i key={i} className={i <= vIdx ? 'active' : ''} />)}
             </div>
 
-            <input
-              className="pv-input"
-              placeholder="Or type your answer..."
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              onKeyDown={handleInputKey}
-            />
+            <div className="pv-input-wrap">
+              <input
+                className="pv-input"
+                placeholder="Type your answer..."
+                value={inputVal}
+                onChange={e => setInputVal(e.target.value)}
+                onKeyDown={handleInputKey}
+              />
+              <button
+                className={'pv-mic-btn' + (listening ? ' active' : '')}
+                onClick={orbTap}
+                title={listening ? 'Listening...' : 'Speak'}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              </button>
+            </div>
           </>
         )}
 
