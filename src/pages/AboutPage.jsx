@@ -1,9 +1,10 @@
 import { img, placeholderBg } from '../data.js';
 
 const TEAM = [
-  { name: 'Anika Sharma', role: 'CEO & Co-founder', q: 'woman,portrait,professional' },
-  { name: 'Liam Chen', role: 'CTO & Co-founder', q: 'man,portrait,professional' },
-  { name: 'Sofia Martinez', role: 'Head of Design', q: 'woman,designer,portrait' },
+  { name: 'Gaurav Arora', role: 'Co-founder', q: 'man,portrait,professional' },
+  { name: 'Amit Chakraborty', role: 'Co-founder', q: 'man,portrait,business' },
+  { name: 'MP Venkatesh', role: 'Co-founder', q: 'man,portrait,executive' },
+  { name: 'Naveksha Jain', role: 'Co-founder', q: 'woman,portrait,professional' },
 ];
 
 export default function AboutPage({ showContact }) {
