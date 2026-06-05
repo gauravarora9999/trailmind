@@ -906,6 +906,55 @@ nav.site-nav {
 }
 .pv-plan-actions .btn { flex: 1; justify-content: center; }
 
+/* ── Leaflet Map ── */
+.pv-map {
+  height: 300px;
+  border-radius: 12px;
+  margin: 16px 0;
+  z-index: 1;
+}
+.pv-map .leaflet-control-attribution { font-size: 9px; }
+.tm-map-pin { background: none !important; border: none !important; }
+
+/* ── Packing List ── */
+.pv-packing {
+  margin-top: 20px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 16px;
+}
+.pv-packing-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+.pv-packing-header h4 { font-size: 15px; font-weight: 700; color: #fff; margin: 0; }
+.pv-packing-count {
+  font-size: 12px; font-weight: 600; color: var(--color-amber);
+  background: rgba(245,158,11,0.15); padding: 3px 10px; border-radius: 20px;
+}
+.pv-pack-cat { margin-bottom: 12px; }
+.pv-pack-cat:last-child { margin-bottom: 0; }
+.pv-pack-cat-name {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
+  color: var(--color-coral); margin-bottom: 6px;
+}
+.pv-pack-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.pv-pack-item {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  font-size: 13px; color: rgba(255,255,255,0.8); padding: 4px 10px;
+  background: rgba(255,255,255,0.06); border-radius: 8px;
+  transition: all .2s;
+}
+.pv-pack-item:hover { background: rgba(255,255,255,0.1); }
+.pv-pack-item.done span { text-decoration: line-through; color: rgba(255,255,255,0.35); }
+.pv-pack-item input[type="checkbox"] {
+  accent-color: var(--color-coral); width: 14px; height: 14px; cursor: pointer;
+}
+.pv-packing-btn {
+  width: 100%; border: 1px dashed rgba(255,255,255,0.25) !important;
+  color: var(--color-amber) !important; font-weight: 600;
+}
+.pv-packing-btn:hover { border-color: var(--color-amber) !important; background: rgba(245,158,11,0.08) !important; }
+
 /* Voice card suggestions */
 .vc-suggestions {
   display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;

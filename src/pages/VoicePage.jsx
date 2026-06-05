@@ -3,15 +3,15 @@ import { money } from '../data.js';
 
 const SILENCE_TIMEOUT = 8000;
 const WELCOME = "I'm Trailmind, your AI trip planner. I'll ask a few quick questions to build a costed, day-by-day itinerary.";
-const OFF_TOPIC = "This is a focused trip-planning chat — I can only help with building your itinerary right now.";
+const OFF_TOPIC = "This is a focused trip-planning chat -- I can only help with building your itinerary right now.";
 const DONE_MSG = "Your trip plan is ready above! Click 'New chat' to plan another trip.";
 
 const STEPS = [
   {
     key: 'destination',
     ask: 'Where would you like to go? Name a city or country.',
-    retry: "I need a destination to plan your trip. Name a city or country — e.g. 'Tokyo', 'Peru', or 'Bali'.",
-    ok: (v) => 'Got it — ' + v + '.',
+    retry: "I need a destination to plan your trip. Name a city or country -- e.g. 'Tokyo', 'Peru', or 'Bali'.",
+    ok: (v) => 'Got it -- ' + v + '.',
     parse(t) {
       let c = t.trim()
         .replace(/^(i('d| would) like to (go to|visit)|let'?s go to|i want to go to|how about|maybe|take me to|thinking of|planning)\s+/i, '')
@@ -23,7 +23,7 @@ const STEPS = [
     key: 'duration',
     ask: 'How many days is your trip?',
     retry: "I need the trip length. Say a number like '5 days', '10', or 'a week'.",
-    ok: (v) => v + ' days — noted.',
+    ok: (v) => v + ' days -- noted.',
     parse(t) {
       const l = t.toLowerCase();
       if (/\b2\s*weeks?\b|\bfortnight\b/.test(l)) return 14;
@@ -39,7 +39,7 @@ const STEPS = [
     key: 'budget',
     ask: "What's your total budget per person (in USD)?",
     retry: "I need a budget amount. Say something like '$2000', '1500', or '3k'.",
-    ok: (v) => '$' + v + ' per person — got it.',
+    ok: (v) => '$' + v + ' per person -- got it.',
     parse(t) {
       const l = t.toLowerCase().replace(/,/g, '');
       const k = l.match(/([\d.]+)\s*k\b/);
@@ -51,9 +51,9 @@ const STEPS = [
   },
   {
     key: 'style',
-    ask: 'Travel style — Budget, Mid-range, or Luxury?',
+    ask: 'Travel style -- Budget, Mid-range, or Luxury?',
     retry: 'Please pick one: Budget, Mid-range, or Luxury.',
-    ok: (v) => v + ' style — perfect.',
+    ok: (v) => v + ' style -- perfect.',
     parse(t) {
       const l = t.toLowerCase();
       if (/budget|cheap|backpack|hostel|saving|frugal|low.cost/i.test(l)) return 'Budget';
@@ -65,8 +65,8 @@ const STEPS = [
   {
     key: 'travellers',
     ask: 'How many travellers?',
-    retry: "Just the number of people — e.g. '2', 'solo', or 'couple'.",
-    ok: (v) => v + ' traveller' + (v > 1 ? 's' : '') + ' — all set!',
+    retry: "Just the number of people -- e.g. '2', 'solo', or 'couple'.",
+    ok: (v) => v + ' traveller' + (v > 1 ? 's' : '') + ' -- all set!',
     parse(t) {
       const l = t.toLowerCase();
       if (/\bsolo\b|\bjust me\b|\bmyself\b|\balone\b/.test(l)) return 1;
@@ -130,6 +130,93 @@ function nextUnanswered(answers, from) {
   return STEPS.length;
 }
 
+/* Leaflet map component */
+function TripMap({ plan }) {
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+
+  useEffect(() => {
+    if (!plan || !plan.itinerary || !window.L || !mapRef.current) return;
+    if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null; }
+
+    const points = [];
+    const colors = ['#FF5B3A', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'];
+    plan.itinerary.forEach((day) => {
+      if (day.activities) {
+        day.activities.forEach((act) => {
+          if (act.lat && act.lng) points.push({ ...act, day: day.day });
+        });
+      }
+    });
+
+    if (points.length === 0) return;
+
+    const map = window.L.map(mapRef.current, { scrollWheelZoom: false }).setView([points[0].lat, points[0].lng], 13);
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(map);
+
+    const bounds = [];
+    points.forEach((p) => {
+      const color = colors[(p.day - 1) % colors.length];
+      const icon = window.L.divIcon({
+        className: 'tm-map-pin',
+        html: '<div style="background:' + color + ';width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)">D' + p.day + '</div>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+      });
+      window.L.marker([p.lat, p.lng], { icon })
+        .addTo(map)
+        .bindPopup('<b>' + p.name + '</b><br>' + p.type + ' | ' + p.time);
+      bounds.push([p.lat, p.lng]);
+    });
+
+    if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+    mapInstance.current = map;
+
+    return () => { if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null; } };
+  }, [plan]);
+
+  return <div ref={mapRef} className="pv-map" />;
+}
+
+/* Packing list checklist component */
+function PackingList({ categories }) {
+  const [checked, setChecked] = useState({});
+  const toggle = (cat, idx) => {
+    const key = cat + '-' + idx;
+    setChecked(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+  const total = categories.reduce((s, c) => s + c.items.length, 0);
+  const done = Object.values(checked).filter(Boolean).length;
+
+  return (
+    <div className="pv-packing">
+      <div className="pv-packing-header">
+        <h4>Packing List</h4>
+        <span className="pv-packing-count">{done}/{total} packed</span>
+      </div>
+      {categories.map((cat, ci) => (
+        <div key={ci} className="pv-pack-cat">
+          <div className="pv-pack-cat-name">{cat.name}</div>
+          <div className="pv-pack-items">
+            {cat.items.map((item, ii) => {
+              const key = cat.name + '-' + ii;
+              return (
+                <label key={ii} className={'pv-pack-item' + (checked[key] ? ' done' : '')}>
+                  <input type="checkbox" checked={!!checked[key]} onChange={() => toggle(cat.name, ii)} />
+                  <span>{item}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function VoicePage({ openPlanner, showExplore, toast, currency = 'USD', initialMessage = '' }) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -139,6 +226,8 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
   const [transcript, setTranscript] = useState('');
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState(null);
+  const [packingList, setPackingList] = useState(null);
+  const [packingLoading, setPackingLoading] = useState(false);
   const recognRef = useRef(null);
   const synthRef = useRef(null);
   const chatEndRef = useRef(null);
@@ -185,6 +274,30 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
       botSay('Connection error. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const generatePackingList = async () => {
+    setPackingLoading(true);
+    try {
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tripParams: answers, currency, type: 'packing' }),
+      });
+      let data;
+      try { data = await resp.json(); } catch { data = null; }
+      if (data && data.categories) {
+        setPackingList(data.categories);
+      } else if (data && data.plan && data.plan.categories) {
+        setPackingList(data.plan.categories);
+      } else {
+        toast('Could not generate packing list. Try again.');
+      }
+    } catch {
+      toast('Connection error generating packing list.');
+    } finally {
+      setPackingLoading(false);
     }
   };
 
@@ -337,6 +450,7 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
     if (synthRef.current) synthRef.current.cancel();
     setMessages([]);
     setPlan(null);
+    setPackingList(null);
     setInputVal('');
     setLoading(false);
     setTranscript('');
@@ -436,6 +550,8 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
               </div>
             </div>
 
+            <TripMap plan={plan} />
+
             {plan.itinerary && plan.itinerary.map((day) => (
               <div className="pv-day" key={day.day}>
                 <div className="pv-day-header">
@@ -487,6 +603,16 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
                 ))}
               </div>
             )}
+
+            {!packingList && (
+              <div style={{ marginTop: 20 }}>
+                <button className="btn btn-ghost pv-packing-btn" onClick={generatePackingList} disabled={packingLoading}>
+                  {packingLoading ? 'Generating...' : 'Generate packing list'}
+                </button>
+              </div>
+            )}
+
+            {packingList && <PackingList categories={packingList} />}
 
             <div className="pv-plan-actions">
               <button className="btn btn-coral" onClick={() => toast('Trip saved!')}>Save this trip</button>
