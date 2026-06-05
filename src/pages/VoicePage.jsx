@@ -1,5 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { money } from '../data.js';
+
+const SILENCE_TIMEOUT = 8000; // 8 seconds of silence before auto-stop
 
 export default function VoicePage({ openPlanner, showExplore, toast, currency = 'USD', initialMessage = '' }) {
   const [messages, setMessages] = useState([]);
@@ -12,35 +14,88 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
   const synthRef = useRef(null);
   const chatEndRef = useRef(null);
   const sentInit = useRef(false);
+  const silenceTimer = useRef(null);
+  const finalTranscript = useRef('');
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Set up speech recognition
+  const stopRecording = useCallback(() => {
+    if (silenceTimer.current) { clearTimeout(silenceTimer.current); silenceTimer.current = null; }
+    if (recognRef.current) try { recognRef.current.stop(); } catch (_) {}
+    setListening(false);
+
+    const text = finalTranscript.current.trim();
+    finalTranscript.current = '';
+    if (text) {
+      setTranscript('');
+      sendMessage(text);
+    }
+  }, []);
+
+  const resetSilenceTimer = useCallback(() => {
+    if (silenceTimer.current) clearTimeout(silenceTimer.current);
+    silenceTimer.current = setTimeout(() => {
+      stopRecording();
+    }, SILENCE_TIMEOUT);
+  }, [stopRecording]);
+
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SR) {
       const recog = new SR();
       recog.lang = 'en-US';
+      recog.continuous = true;
       recog.interimResults = true;
+
       recog.onresult = (e) => {
-        const text = Array.from(e.results).map(r => r[0].transcript).join('');
-        setTranscript(text);
-        if (e.results[e.results.length - 1].isFinal) {
-          setTranscript('');
-          sendMessage(text);
-          try { recog.stop(); } catch (_) {}
+        let interim = '';
+        let final = '';
+        for (let i = 0; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) {
+            final += t + ' ';
+          } else {
+            interim += t;
+          }
         }
+        if (final) {
+          finalTranscript.current = final.trim();
+        }
+        setTranscript((final + interim).trim());
+        resetSilenceTimer();
       };
-      recog.onend = () => setListening(false);
+
+      recog.onerror = (e) => {
+        if (e.error !== 'no-speech' && e.error !== 'aborted') {
+          toast('Mic error: ' + e.error);
+        }
+        setListening(false);
+        if (silenceTimer.current) { clearTimeout(silenceTimer.current); silenceTimer.current = null; }
+      };
+
+      recog.onend = () => {
+        // If still in listening state, the browser auto-stopped — finalize
+        setListening(prev => {
+          if (prev) {
+            const text = finalTranscript.current.trim();
+            finalTranscript.current = '';
+            if (text) {
+              setTranscript('');
+              sendMessage(text);
+            }
+          }
+          return false;
+        });
+        if (silenceTimer.current) { clearTimeout(silenceTimer.current); silenceTimer.current = null; }
+      };
+
       recognRef.current = recog;
     }
     synthRef.current = window.speechSynthesis || null;
   }, []);
 
-  // Send initial message if provided
   useEffect(() => {
     if (initialMessage && !sentInit.current) {
       sentInit.current = true;
@@ -59,15 +114,18 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
 
   const toggleMic = () => {
     if (listening) {
-      if (recognRef.current) try { recognRef.current.stop(); } catch (_) {}
-      setListening(false);
+      stopRecording();
       return;
     }
-    if (recognRef.current) {
-      setListening(true);
-      setTranscript('');
-      try { recognRef.current.start(); } catch (_) {}
+    if (!recognRef.current) {
+      toast('Speech recognition not supported in this browser');
+      return;
     }
+    finalTranscript.current = '';
+    setTranscript('');
+    setListening(true);
+    try { recognRef.current.start(); } catch (_) {}
+    resetSilenceTimer();
   };
 
   const sendMessage = async (text) => {
@@ -87,22 +145,18 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
         body: JSON.stringify({ messages: newMessages, currency }),
       });
 
-      if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to get response');
-      }
-
       const data = await resp.json();
-      const assistantMsg = { role: 'assistant', content: data.message };
+      const assistantMsg = { role: 'assistant', content: data.message || 'No response received.' };
       setMessages(prev => [...prev, assistantMsg]);
-      speak(data.message);
+      speak(data.message || '');
 
       if (data.plan) {
         setPlan(data.plan);
       }
     } catch (err) {
-      toast('Error: ' + err.message);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' }]);
+      const errMsg = 'Connection failed: ' + err.message;
+      toast(errMsg);
+      setMessages(prev => [...prev, { role: 'assistant', content: errMsg }]);
     } finally {
       setLoading(false);
     }
@@ -124,7 +178,6 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
           <p className="pv-sub">Tell me about your dream trip and I'll build a detailed, costed itinerary.</p>
         </div>
 
-        {/* Chat messages */}
         <div className="pv-chat">
           {messages.length === 0 && !loading && (
             <div className="pv-empty">
@@ -138,18 +191,16 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
               </div>
               <p>Type or speak your travel idea</p>
               <div className="pv-suggestions">
-                <button onClick={() => sendMessage('I want a week in Japan, mid-range budget, love food and culture')}>Japan food & culture trip</button>
+                <button onClick={() => sendMessage('I want a week in Japan, mid-range budget, love food and culture')}>Japan food & culture</button>
                 <button onClick={() => sendMessage('Adventure trip to Patagonia for 10 days, budget around $2500')}>Patagonia adventure</button>
-                <button onClick={() => sendMessage('Romantic 5 days in Italy, luxury, just the two of us')}>Romantic Italy getaway</button>
+                <button onClick={() => sendMessage('Romantic 5 days in Italy, luxury, just the two of us')}>Romantic Italy</button>
               </div>
             </div>
           )}
 
           {messages.map((msg, i) => (
             <div key={i} className={'pv-msg pv-msg-' + msg.role}>
-              <div className="pv-msg-bubble">
-                {msg.content}
-              </div>
+              <div className="pv-msg-bubble">{msg.content}</div>
             </div>
           ))}
 
@@ -170,12 +221,13 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
           <div ref={chatEndRef} />
         </div>
 
-        {/* Plan result */}
         {plan && (
           <div className="pv-plan">
             <div className="pv-plan-header">
-              <h3>{plan.duration}-day {plan.city} adventure</h3>
-              <div className="pv-plan-meta">{plan.tier} | {plan.travellers} traveller{plan.travellers > 1 ? 's' : ''} | {plan.country}</div>
+              <div>
+                <h3>{plan.duration}-day {plan.city} adventure</h3>
+                <div className="pv-plan-meta">{plan.tier} | {plan.travellers} traveller{plan.travellers > 1 ? 's' : ''} | {plan.country}</div>
+              </div>
               <div className="pv-plan-score">
                 <svg viewBox="0 0 120 120" style={{ width: 80, height: 80 }}>
                   <circle cx="60" cy="60" r="50" fill="none" stroke="#333" strokeWidth="8" />
@@ -191,7 +243,6 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
               </div>
             </div>
 
-            {/* Day-by-day */}
             {plan.itinerary.map((day) => (
               <div className="pv-day" key={day.day}>
                 <div className="pv-day-header">
@@ -211,7 +262,6 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
               </div>
             ))}
 
-            {/* Cost breakdown */}
             <div className="pv-breakdown">
               <h4>Cost estimate (per person)</h4>
               <div className="pv-brk-row"><span>Activities</span><b>~{m(plan.breakdown.activities)}</b></div>
@@ -228,7 +278,6 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
               )}
             </div>
 
-            {/* Accommodation options */}
             {plan.accommodation && (
               <div className="pv-stays">
                 <h4>Where to stay</h4>
@@ -246,7 +295,7 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
 
             <div className="pv-plan-actions">
               <button className="btn btn-coral" onClick={() => toast('Trip saved!')}>Save this trip</button>
-              <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.2)' }} onClick={() => { setPlan(null); sendMessage('Can you adjust the plan? I\'d like some changes.'); }}>Adjust plan</button>
+              <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.2)' }} onClick={() => { setPlan(null); sendMessage('Can you adjust the plan? I would like some changes.'); }}>Adjust plan</button>
             </div>
           </div>
         )}
@@ -256,30 +305,37 @@ export default function VoicePage({ openPlanner, showExplore, toast, currency = 
           <div className="pv-input-wrap">
             <input
               className="pv-input"
-              placeholder={listening ? 'Listening...' : 'Describe your dream trip...'}
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
+              placeholder={listening ? 'Listening... click mic or wait to finish' : 'Describe your dream trip...'}
+              value={listening ? transcript : inputVal}
+              onChange={e => { if (!listening) setInputVal(e.target.value); }}
               onKeyDown={handleKey}
               disabled={loading}
+              readOnly={listening}
             />
             <button
               className={'pv-mic-btn' + (listening ? ' active' : '')}
               onClick={toggleMic}
-              title={listening ? 'Stop listening' : 'Speak'}
+              title={listening ? 'Click to stop recording' : 'Click to start recording (stops after 8s of silence)'}
               disabled={loading}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" y1="19" x2="12" y2="23"/>
-                <line x1="8" y1="23" x2="16" y2="23"/>
-              </svg>
+              {listening ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="6" width="12" height="12" rx="2"/>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              )}
             </button>
           </div>
           <button
             className="pv-send-btn"
-            onClick={() => sendMessage(inputVal)}
-            disabled={!inputVal.trim() || loading}
+            onClick={() => { if (listening) stopRecording(); else sendMessage(inputVal); }}
+            disabled={loading || (!inputVal.trim() && !listening)}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"/>

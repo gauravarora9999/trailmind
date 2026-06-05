@@ -31,11 +31,11 @@ When you generate a plan, the "plan" field must be:
   "itinerary": [
     {
       "day": 1,
-      "theme": "Day theme like Arrival & Culture",
+      "theme": "Day theme",
       "activities": [
-        {"time":"09:00","name":"Specific real place name","type":"Culture","duration":"2 hours","cost":0,"description":"One sentence about it"},
-        {"time":"12:00","name":"Lunch at Real Restaurant","type":"Food","duration":"1.5 hours","cost":25,"description":"One sentence"},
-        {"time":"15:00","name":"Afternoon Activity","type":"Adventure","duration":"3 hours","cost":45,"description":"One sentence"}
+        {"time":"09:00","name":"Place name","type":"Culture","duration":"2 hours","cost":0},
+        {"time":"12:00","name":"Restaurant","type":"Food","duration":"1.5 hours","cost":25},
+        {"time":"15:00","name":"Activity","type":"Adventure","duration":"3 hours","cost":45}
       ]
     }
   ],
@@ -48,20 +48,17 @@ When you generate a plan, the "plan" field must be:
     "total": 1419
   },
   "accommodation": [
-    {"name":"Hotel Name","type":"Hotel type","pricePerNight":150,"description":"One sentence"},
-    {"name":"Alt Hotel","type":"Alt type","pricePerNight":85,"description":"One sentence"}
+    {"name":"Hotel Name","type":"Hotel type","pricePerNight":150},
+    {"name":"Alt Hotel","type":"Alt type","pricePerNight":85}
   ]
 }
 
 ## Rules
-- All costs are per person in USD.
-- Use REAL place names, restaurants, activities. No generic placeholders.
-- Mix popular highlights with hidden gems.
-- 3 activities per day. Each day needs a theme.
-- Score (60-96) reflects how well the plan matches stated preferences.
-- accommodation array should have 2-3 options at different price points.
-- breakdown.total should be the sum of all other breakdown fields.
-- Duration in days, nights = duration - 1.`;
+- All costs per person in USD. Keep activity descriptions SHORT (skip the "description" field to save tokens).
+- Use REAL place names. Mix popular + hidden gems. 3 activities per day.
+- Score 60-96 reflects preference match. 2-3 accommodation options.
+- breakdown.total = sum of all breakdown fields. nights = duration - 1.
+- Keep the plan to 5 days max to stay concise. If they want longer, summarize extra days.`;
 
 export default async (req) => {
   if (req.method === 'OPTIONS') {
@@ -70,16 +67,27 @@ export default async (req) => {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return Response.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
+    return Response.json({ message: 'API key not configured. Set ANTHROPIC_API_KEY in Netlify environment variables.', plan: null }, { status: 200 });
   }
 
+  let body;
   try {
-    const { messages, currency } = await req.json();
+    body = await req.json();
+  } catch {
+    return Response.json({ message: 'Invalid request.', plan: null }, { status: 200 });
+  }
 
-    const currencyNote = currency && currency !== 'USD'
-      ? `\n\nThe user prefers prices in ${currency}. Still calculate in USD internally but mention the equivalent in ${currency} in your message text when discussing costs.`
-      : '';
+  const { messages, currency } = body;
 
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return Response.json({ message: 'No messages provided.', plan: null }, { status: 200 });
+  }
+
+  const currencyNote = currency && currency !== 'USD'
+    ? `\nThe user prefers ${currency}. Still use USD internally but mention ${currency} equivalents in your message.`
+    : '';
+
+  try {
     const resp = await fetch(ANTHROPIC_API, {
       method: 'POST',
       headers: {
@@ -88,36 +96,39 @@ export default async (req) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4096,
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 3000,
         system: SYSTEM_PROMPT + currencyNote,
-        messages: messages.map(m => ({
-          role: m.role,
-          content: m.content,
-        })),
+        messages: messages.map(m => ({ role: m.role, content: m.content })),
       }),
     });
 
     if (!resp.ok) {
-      const err = await resp.text();
-      return Response.json({ error: 'Claude API error', detail: err }, { status: resp.status });
+      const errText = await resp.text();
+      console.error('Claude API error:', resp.status, errText);
+      return Response.json({
+        message: 'AI service error (' + resp.status + '). Please try again.',
+        plan: null
+      }, { status: 200 });
     }
 
     const data = await resp.json();
     const text = data.content[0].text;
 
-    // Parse Claude's JSON response
     let parsed;
     try {
       parsed = JSON.parse(text);
     } catch {
-      // If Claude didn't return valid JSON, wrap it
       parsed = { message: text, plan: null };
     }
 
     return Response.json(parsed);
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error('Function error:', err);
+    return Response.json({
+      message: 'Connection error: ' + err.message + '. Please try again.',
+      plan: null
+    }, { status: 200 });
   }
 };
 
