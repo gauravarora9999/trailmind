@@ -11,7 +11,7 @@ export default function Nav({ showExplore, showPlanner, showExperience, showVoic
         <div className="nav-links">
           <a onClick={showExplore} style={{ cursor: 'pointer' }}>Explore</a>
           <a onClick={showPlanner} style={{ cursor: 'pointer' }}>AI Planner</a>
-          <a onClick={showExperience} style={{ cursor: 'pointer' }}>Experience Center</a>
+          <a onClick={showExperience} style={{ cursor: 'pointer' }}>Experience Center <span style={{ fontSize: 9, background: 'var(--color-coral)', color: '#fff', padding: '2px 6px', borderRadius: 8, marginLeft: 4, verticalAlign: 'super', fontWeight: 700, letterSpacing: '.5px' }}>SOON</span></a>
           <a onClick={showVoicePage} style={{ cursor: 'pointer' }}>Plan by Voice</a>
         </div>
 

@@ -4,8 +4,54 @@ export const PALETTE = ['#1B4D31','#0F4C81','#B45309','#7C2D12','#155E75','#6D28
 // ── Hash function for seeding ──
 export function hash(s) { let h=0; for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;} return h; }
 
-// ── Image URL generator with loremflickr ──
-export function img(q) { return `https://loremflickr.com/640/800/${encodeURIComponent(q)}?lock=${Math.abs(hash(q))}`; }
+// ── Curated image map (Unsplash) ──
+const IMG = {
+  'dubai,skyline':'photo-1512453979798-5ea266f8880c',
+  'tokyo,shibuya':'photo-1540959733332-eab4deabeeaf',
+  'london,bigben':'photo-1513635269975-59663e0ac1ad',
+  'paris,eiffel':'photo-1502602898657-3e91760cbb34',
+  'newyork,manhattan':'photo-1496442226666-8d4d0e62e6e9',
+  'bali,temple':'photo-1537996194471-e657df975ab4',
+  'rome,colosseum':'photo-1552832230-c0197dd311b5',
+  'singapore,marina':'photo-1525625293386-3f8f99389edd',
+  'bangkok,temple':'photo-1508009603885-50cf7c579365',
+  'barcelona,sagrada':'photo-1583422409516-2895a77efded',
+  'istanbul,mosque':'photo-1541432901042-2d8bd64b4a9b',
+  'capetown,mountain':'photo-1580060839134-75a5edca2e99',
+  'mountain,trek,hiking':'photo-1464822759023-fed622ff2c3b',
+  'beach,island,tropical':'photo-1507525428034-b723cf961d3e',
+  'city,culture,museum':'photo-1477959858617-67f85cf4f1df',
+  'desert,safari,wildlife':'photo-1509316785289-025f5b846b35',
+  'food,wine,market':'photo-1414235077428-338989a2e8c0',
+  'snow,ski,winter':'photo-1551524559-8af4e6624178',
+  'roadtrip,driving,scenic':'photo-1469854523086-cc02fe5d8800',
+  'wellness,yoga,spa':'photo-1506126613408-eca07ce68773',
+  'burj+khalifa,sky':'photo-1512453979798-5ea266f8880c',
+  'dubai,desert,dunes':'photo-1451337516015-6b6e9a44a8a3',
+  'london+eye,thames':'photo-1533929736458-ca588d08c8be',
+  'tower+bridge,london':'photo-1513635269975-59663e0ac1ad',
+  'shibuya,skyline':'photo-1540959733332-eab4deabeeaf',
+  'mount+fuji,lake':'photo-1490806843957-31f4c9a91c65',
+  'eiffel+tower,paris':'photo-1502602898657-3e91760cbb34',
+  'seine,paris,boat':'photo-1499856871958-5b9627545d1a',
+};
+const KW_IMG = [
+  [/temple|mosque|church|palace|cathedral/i, 'photo-1548013146-72479768bada'],
+  [/food|restaurant|market|souk|cuisine/i, 'photo-1504674900247-0877df9cc836'],
+  [/adventure|safari|dune|trek|hike|climb/i, 'photo-1551632811-561732d1e306'],
+  [/museum|art|gallery|culture/i, 'photo-1554907984-15263bfd63bd'],
+  [/beach|island|bay|snorkel|surf/i, 'photo-1507525428034-b723cf961d3e'],
+  [/view|tower|bridge|skyline|landmark/i, 'photo-1480714378408-67cf0d13bc1b'],
+  [/night|bar|club|show|theatre/i, 'photo-1514525253161-7a46d19cd819'],
+  [/relax|spa|yoga|cruise|garden/i, 'photo-1540555700478-4be289fbec6d'],
+];
+const FALLBACK = 'photo-1488646953014-85cb44e25828';
+function unsplash(id) { return 'https://images.unsplash.com/' + id + '?w=640&h=800&fit=crop&q=80'; }
+export function img(q) {
+  if (IMG[q]) return unsplash(IMG[q]);
+  for (const [re, id] of KW_IMG) { if (re.test(q)) return unsplash(id); }
+  return unsplash(FALLBACK);
+}
 
 // ── Placeholder gradient background ──
 export function placeholderBg(seed) {

@@ -1,43 +1,6 @@
-import { useState } from 'react';
-import { XC, GEN_STAGES, img, placeholderBg } from '../data.js';
-
-const SCENE_CITIES = Object.keys(XC);
+import { img, placeholderBg } from '../data.js';
 
 export default function ExperiencePage({ toast }) {
-  const [selCity, setSelCity] = useState(null);
-  const [selAct, setSelAct] = useState(null);
-  const [avatars, setAvatars] = useState([]);
-  const [generating, setGenerating] = useState(false);
-  const [genStage, setGenStage] = useState(0);
-  const [result, setResult] = useState(null);
-
-  const addAvatars = (e) => {
-    [...e.target.files].forEach(f => {
-      const r = new FileReader();
-      r.onload = ev => setAvatars(prev => [...prev, { src: ev.target.result }]);
-      r.readAsDataURL(f);
-    });
-    e.target.value = '';
-  };
-
-  const removeAvatar = (i) => setAvatars(prev => prev.filter((_, idx) => idx !== i));
-
-  const generate = () => {
-    if (!selCity || selAct === null) { toast('Pick a destination and activity first'); return; }
-    setGenerating(true);
-    setGenStage(0);
-    setResult(null);
-    let s = 0;
-    const iv = setInterval(() => {
-      s++;
-      setGenStage(s);
-      if (s >= GEN_STAGES.length) {
-        clearInterval(iv);
-        setResult(XC[selCity][selAct]);
-        setGenerating(false);
-      }
-    }, 650);
-  };
 
   return (
     <>
@@ -68,84 +31,12 @@ export default function ExperiencePage({ toast }) {
           </div>
         </div>
 
-        <div className="xc-section-label" id="builderTop">Build your own experience</div>
-        <div className="builder">
-          <h3>Place yourself in the adventure</h3>
-          <div className="bsub">Three steps. Choose a place, an activity, add your crew's avatars, and generate.</div>
-          <div className="build-steps">
-            <div className="step">
-              <div className="num">1</div>
-              <h4>Choose a destination</h4>
-              <div className="opt-row">
-                {SCENE_CITIES.map(c => (
-                  <button key={c} className={'opt' + (selCity === c ? ' sel' : '')} onClick={() => { setSelCity(c); setSelAct(null); }}>{c}</button>
-                ))}
-              </div>
-            </div>
-            <div className="step">
-              <div className="num">2</div>
-              <h4>Pick an activity</h4>
-              {selCity ? (
-                <div className="opt-row" style={{ flexDirection: 'column' }}>
-                  {XC[selCity].map((a, i) => (
-                    <button key={a.t} className={'opt' + (selAct === i ? ' sel' : '')} onClick={() => setSelAct(i)} style={{ display: 'block', width: '100%', textAlign: 'left', marginBottom: 8 }}>{a.t}</button>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty" style={{ fontSize: 13 }}>Choose a destination first</div>
-              )}
-            </div>
-            <div className="step">
-              <div className="num">3</div>
-              <h4>Add avatars</h4>
-              <label className="uploader" htmlFor="avatarInput">+ Upload face photo(s)</label>
-              <input type="file" id="avatarInput" accept="image/*" multiple style={{ display: 'none' }} onChange={addAvatars} />
-              <div className="avatars">
-                {avatars.map((a, i) => (
-                  <div className="avatar" key={i}>
-                    <img src={a.src} alt={'Avatar ' + i} />
-                    <button className="rm" onClick={() => removeAvatar(i)}>&#10005;</button>
-                    <span className="lbl">{i === 0 ? 'You' : 'Guest ' + i}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="go-row">
-            <button className="btn btn-coral" onClick={generate}>&#10022; Generate my experience</button>
-            <span style={{ color: 'var(--color-gray)', fontSize: 13, fontWeight: 500 }}>No photo? We'll use sample avatars.</span>
-          </div>
-
-          {generating && (
-            <div className="xc-result" style={{ marginTop: 34 }}>
-              <div className="rstage" style={{ background: placeholderBg(selCity), minHeight: 380, position: 'relative' }}>
-                <div className="gen-overlay">
-                  <div className="spinner" style={{ width: 54, height: 54, borderWidth: 4 }} />
-                  <div className="gen-stage-txt">{GEN_STAGES[Math.min(genStage, GEN_STAGES.length - 1)]}</div>
-                  <div className="gen-bar"><i style={{ width: ((genStage + 1) / GEN_STAGES.length * 100) + '%' }} /></div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {result && !generating && (
-            <div className="xc-result" style={{ marginTop: 34 }}>
-              <div className="rstage" style={{ background: placeholderBg(result.q), minHeight: 380, position: 'relative' }}>
-                <img src={img(result.q)} alt={result.t} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
-              </div>
-              <div className="rcaption">
-                <div>
-                  <h4>{result.t} &middot; {selCity}</h4>
-                  <p>{avatars.length ? avatars.length + ' avatar(s)' : 'Sample avatars'} placed {result.s}.</p>
-                </div>
-                <div className="acts">
-                  <button className="btn btn-ghost" style={{ border: '1px solid var(--color-line)' }} onClick={() => toast('Saved to your gallery')}>Save</button>
-                  <button className="btn btn-ghost" style={{ border: '1px solid var(--color-line)' }} onClick={() => toast('Shareable link copied')}>Share</button>
-                  <button className="btn btn-coral" onClick={() => toast('Added to your itinerary')}>Add to trip</button>
-                </div>
-              </div>
-            </div>
-          )}
+        <div className="builder" style={{ textAlign: 'center', padding: '60px 24px' }}>
+          <div style={{ display: 'inline-block', background: 'var(--color-coral)', color: '#fff', padding: '6px 18px', borderRadius: 20, fontSize: 13, fontWeight: 700, letterSpacing: '.5px', marginBottom: 20 }}>COMING SOON</div>
+          <h3>Build your own experience</h3>
+          <p style={{ color: 'var(--color-gray)', maxWidth: 520, margin: '12px auto 0', lineHeight: 1.7 }}>
+            Upload your photo, pick a destination and activity, and our AI will generate a photorealistic preview of you in the adventure &mdash; before you book it. This feature is currently under development.
+          </p>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 36 }}>
