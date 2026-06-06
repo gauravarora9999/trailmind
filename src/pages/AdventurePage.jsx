@@ -7,6 +7,63 @@ const GREETING = {
   action: null,
 };
 
+const TOTAL_FIELDS = 12;
+const FIELD_KEYWORDS = [
+  'name', 'age', 'city', 'sport', 'destination', 'fitness',
+  'certification', 'license', 'currency', 'budget', 'days', 'risk'
+];
+
+// Sample demo plan shown without going through the full flow
+const DEMO_PROFILE = {
+  name: 'Alex', age: 29, home_city: 'Mumbai', adventure_sport: 'Trekking',
+  planned_location: 'Himalayas, India', fitness_level: 'High',
+  certifications: 'None', driving_license: 'Car', license_issued_in: 'India',
+  preferred_currency: 'INR', budget: 80000, available_days: 7, risk_tolerance: 'Moderate',
+};
+const DEMO_PLAN = {
+  persona: 'Mountaineer', readiness_index: 82, risk_tier: 'Moderate', adventure_tier: 'Intermediate',
+  recommended_adventure: {
+    name: 'Kedarkantha Winter Trek', why_it_fits: 'Perfect 7-day moderate trek from Mumbai. Summit views at 12,500 ft reward high fitness without requiring technical skills.',
+    location: 'Uttarkashi, Uttarakhand, India', duration_days: 7,
+    story_value_score: 9, physical_challenge: 7, mental_challenge: 6, technical_difficulty: 4, risk_score: 5,
+  },
+  budget: {
+    currency: 'INR', total: 78000, transportation: 18000, accommodation: 12000,
+    food: 8000, gear: 15000, permits: 2000, guides: 14000, insurance: 3000, emergency_buffer: 6000,
+  },
+  travel_plan: 'Mumbai → Dehradun (flight, ~2hrs, ₹6,000) → Sankri base camp by taxi (8hrs, ₹2,500 shared). Acclimatise at Sankri (2,000m) on Day 1 before ascending to Juda Ka Talab camp on Day 2.',
+  gear: {
+    mandatory: ['Trekking boots (Quechua/Decathlon)', 'Layered thermals', 'Down jacket', 'Trekking poles', 'Headlamp', 'Sunglasses UV400'],
+    recommended: ['Gaiters', 'Buff/balaclava', 'Dry bags', 'Blister kit'],
+    optional: ['GoPro', 'Trekking umbrella'],
+    estimated_buy_cost: 14000, estimated_rental_cost: 4000,
+  },
+  documentation: ['Valid Indian ID / Passport', 'Kedarkantha Forest Permit (₹500)', 'Medical fitness certificate', 'Emergency contact form (operator-provided)'],
+  insurance: {
+    type_required: 'Adventure Sports + Emergency Evacuation',
+    estimated_premium: 2800, min_coverage_usd: 50000,
+    rescue_coverage: true, evacuation_coverage: true, repatriation_coverage: true,
+    gear_protection: false, trip_cancellation: true,
+    exclusions_to_watch: ['Pre-existing cardiac conditions', 'Solo trekking without guide', 'Altitude above 13,000ft without permit'],
+  },
+  training_plan: 'Weeks 1-2: Daily 5km runs + stair climbing (10 floors x3). Weeks 3-4: Weekend hikes with 10kg pack. Week 5-6: Increase pack to 15kg, add yoga for flexibility. Final week: Rest and gear check.',
+  risk_analysis: {
+    physical: 'Moderate. Altitude gain of 4,500ft in 3 days is manageable with high fitness. AMS risk is low if acclimatisation schedule is followed.',
+    technical: 'Low-Moderate. No technical climbing required. Snow slopes in winter need microspikes.',
+    environmental: 'Moderate. Winter weather can change rapidly. Temperatures drop to -10°C at summit. Operator monitors forecasts.',
+    financial: 'Low. Well-established route with fixed operator pricing. Budget has 8% emergency buffer.',
+    rescue_complexity: 'Moderate',
+  },
+  alternative_adventure: {
+    name: 'Triund Trek, Dharamshala', location: 'Himachal Pradesh, India',
+    why: 'Easier 2-day trek with stunning Dhauladhar views. Perfect if Kedarkantha weather is unfavourable.',
+    budget_saving: 35000,
+  },
+  one_year_plan: 'Months 1-3: Complete Kedarkantha. Months 4-6: Build endurance with Valley of Flowers trek (Grade 2). Months 7-9: Roopkund trek (Grade 3, 16,000ft). Month 12: Attempt Stok Kangri base camp.',
+  five_year_roadmap: 'Year 1: Kedarkantha → Roopkund. Year 2: First Himalayan pass crossing (Hampta Pass). Year 3: Nepal Annapurna Circuit. Year 4: Island Peak summit (6,189m) with basic mountaineering course. Year 5: Everest Base Camp trek.',
+  lifetime_bucket_list: ['Everest Base Camp, Nepal', 'Patagonia W Trek, Chile', 'Tour du Mont Blanc, Alps', 'Kilimanjaro summit, Tanzania', 'Camino de Santiago, Spain'],
+};
+
 function ProfileCard({ profile, onConfirm, onEdit }) {
   const fields = [
     ['Name', profile.name],
@@ -294,6 +351,8 @@ export default function AdventurePage({ toast, user }) {
   const [listening, setListening] = useState(false);
   const [currentProfile, setCurrentProfile] = useState(null);
   const [profileConfirmed, setProfileConfirmed] = useState(false);
+  const [fieldProgress, setFieldProgress] = useState(0);
+  const [showDemo, setShowDemo] = useState(false);
 
   const bottomRef = useRef(null);
   const recognRef = useRef(null);
@@ -369,7 +428,15 @@ export default function AdventurePage({ toast, user }) {
         plan: data.plan || null,
       };
 
-      if (data.profile) setCurrentProfile(data.profile);
+      if (data.profile) {
+        setCurrentProfile(data.profile);
+        const filled = Object.values(data.profile).filter(v => v !== null && v !== '' && v !== undefined).length;
+        setFieldProgress(Math.min(filled, TOTAL_FIELDS));
+      } else {
+        // Estimate progress from user message count
+        const userCount = updated.filter(m => m.role === 'user').length;
+        setFieldProgress(Math.min(userCount, TOTAL_FIELDS));
+      }
 
       setMessages(prev => [...prev, aiMsg]);
       speak(data.message || '');
@@ -475,6 +542,23 @@ export default function AdventurePage({ toast, user }) {
     }
   };
 
+  const loadDemo = useCallback(() => {
+    setShowDemo(true);
+    setCurrentProfile(DEMO_PROFILE);
+    setFieldProgress(TOTAL_FIELDS);
+    setMessages([
+      { role: 'assistant', content: GREETING.content, action: null, profile: null, plan: null },
+      { role: 'user', content: '(Demo mode — sample profile loaded)', action: null, profile: null, plan: null },
+      {
+        role: 'assistant',
+        content: "Here's a sample adventure plan for Alex — a 7-day Kedarkantha Winter Trek from Mumbai. This is exactly what Trailmind generates for you!",
+        action: 'show_plan',
+        profile: DEMO_PROFILE,
+        plan: DEMO_PLAN,
+      },
+    ]);
+  }, []);
+
   return (
     <div className="adv-page">
       <div className="adv-hero">
@@ -484,6 +568,9 @@ export default function AdventurePage({ toast, user }) {
           <p className="adv-hero-sub">
             Elite adventure planning — powered by AI. Get a personalised plan with risk assessment, gear list, insurance guide, and a 5-year adventure roadmap.
           </p>
+          <button className="adv-demo-btn" onClick={loadDemo}>
+            👁 See a sample plan first
+          </button>
         </div>
       </div>
 
@@ -495,6 +582,12 @@ export default function AdventurePage({ toast, user }) {
               Trailmind Adventure AI
             </div>
             <div className="adv-chat-controls">
+              {showDemo && (
+                <button className="adv-demo-reset" onClick={() => {
+                  setShowDemo(false); setFieldProgress(0); setCurrentProfile(null); setProfileConfirmed(false);
+                  setMessages([{ role: 'assistant', content: GREETING.content, action: null, profile: null, plan: null }]);
+                }}>← Start my plan</button>
+              )}
               <button
                 className={`adv-voice-toggle ${voiceOn ? 'active' : ''}`}
                 onClick={() => setVoiceOn(v => !v)}
@@ -504,6 +597,14 @@ export default function AdventurePage({ toast, user }) {
               </button>
             </div>
           </div>
+          {!showDemo && fieldProgress > 0 && fieldProgress < TOTAL_FIELDS && (
+            <div className="adv-progress-bar">
+              <div className="adv-progress-inner">
+                <div className="adv-progress-fill" style={{ width: `${(fieldProgress / TOTAL_FIELDS) * 100}%` }} />
+              </div>
+              <span className="adv-progress-label">Step {fieldProgress} of {TOTAL_FIELDS}</span>
+            </div>
+          )}
 
           <div className="adv-messages">
             {messages.map((msg, i) => (

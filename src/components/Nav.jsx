@@ -1,17 +1,36 @@
-export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, showAdventure, user, openAuth, logout }) {
+import { useState } from 'react';
+
+export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, showAdventure, showSavedTrips, showAbout, showContact, user, openAuth, logout }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const close = () => setMenuOpen(false);
+
+  const nav = (fn) => { fn(); close(); };
+
   return (
     <nav className="site-nav">
       <div className="wrap nav-in">
-        <div className="logo" onClick={showExplore} style={{ cursor: 'pointer' }}>
+        <div className="logo" onClick={() => nav(showExplore)} style={{ cursor: 'pointer' }}>
           <span className="dot">&#9650;</span> Trailmind
         </div>
 
-        <div className="nav-links">
-          <a onClick={showExplore} style={{ cursor: 'pointer' }}>Explore</a>
-          <a onClick={showPlanner} style={{ cursor: 'pointer' }}>AI Planner</a>
-          <a onClick={showExperience} style={{ cursor: 'pointer' }}>Experience Center</a>
-          <a onClick={showVoicePage} style={{ cursor: 'pointer' }}>Plan by Voice</a>
-          <a onClick={showAdventure} style={{ cursor: 'pointer', color: '#e05a2b', fontWeight: 600 }}>Adventure AI</a>
+        <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
+          <a onClick={() => nav(showExplore)}>Explore</a>
+          <a onClick={() => nav(showPlanner)}>AI Planner</a>
+          <a onClick={() => nav(showExperience)}>Experience Center</a>
+          <a onClick={() => nav(showVoicePage)}>Plan by Voice</a>
+          <a onClick={() => nav(showAdventure)} className="nav-adventure">Adventure AI</a>
+          {user && <a onClick={() => nav(showSavedTrips)}>My Trips</a>}
+          <div className="nav-mobile-auth">
+            {user ? (
+              <button className="btn btn-ghost" style={{ padding: '10px 22px', fontSize: '13px', width: '100%' }} onClick={() => { logout(); close(); }}>Log out</button>
+            ) : (
+              <>
+                <button className="btn btn-ghost" style={{ padding: '10px 22px', fontSize: '13px', width: '100%' }} onClick={() => { openAuth('login'); close(); }}>Log in</button>
+                <button className="btn btn-coral" style={{ padding: '10px 22px', fontSize: '13px', width: '100%', marginTop: 8 }} onClick={() => { openAuth('signup'); close(); }}>Start free</button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="nav-cta">
@@ -28,7 +47,15 @@ export default function Nav({ showExplore, showPlanner, showExperience, showVoic
             </>
           )}
         </div>
+
+        <button className="nav-burger" onClick={() => setMenuOpen(o => !o)} aria-label="Menu">
+          <span className={menuOpen ? 'open' : ''} />
+          <span className={menuOpen ? 'open' : ''} />
+          <span className={menuOpen ? 'open' : ''} />
+        </button>
       </div>
+
+      {menuOpen && <div className="nav-backdrop" onClick={close} />}
     </nav>
   );
 }

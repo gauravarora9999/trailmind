@@ -1,4 +1,4 @@
-export default function Footer({ showExplore, showPlanner, showExperience, showVoicePage, showAbout, showContact }) {
+export default function Footer({ showExplore, showPlanner, showExperience, showVoicePage, showAdventure, showSavedTrips, showAbout, showContact }) {
   return (
     <footer className="site-footer">
       <div className="ft-grid">
@@ -13,6 +13,8 @@ export default function Footer({ showExplore, showPlanner, showExperience, showV
           <a onClick={showPlanner} style={{ cursor: 'pointer' }}>AI Planner</a>
           <a onClick={showExperience} style={{ cursor: 'pointer' }}>Experience Center</a>
           <a onClick={showVoicePage} style={{ cursor: 'pointer' }}>Plan by Voice</a>
+          <a onClick={showAdventure} style={{ cursor: 'pointer' }}>Adventure AI</a>
+          <a onClick={showSavedTrips} style={{ cursor: 'pointer' }}>My Trips</a>
         </div>
 
         <div className="ft-col">

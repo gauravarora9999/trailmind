@@ -15,6 +15,7 @@ import VoicePage from './pages/VoicePage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import ContactPage from './pages/ContactPage.jsx';
 import AdventurePage from './pages/AdventurePage.jsx';
+import SavedTripsPage from './pages/SavedTripsPage.jsx';
 
 export default function App() {
   const [page, setPage] = useState('explore');
@@ -87,6 +88,7 @@ export default function App() {
   const showExperience = () => { setPage('experience'); scrollTop(); };
   const showVoicePage = () => { setPage('voice'); scrollTop(); };
   const showAdventure = () => { setPage('adventure'); scrollTop(); };
+  const showSavedTrips = () => { setPage('saved'); scrollTop(); };
   const showAbout = () => { setPage('about'); scrollTop(); };
   const showContact = () => { setPage('contact'); scrollTop(); };
 
@@ -105,7 +107,7 @@ export default function App() {
     openPlanner(city, selections, tier);
   };
 
-  const navFns = { showExplore, showPlanner, showExperience, showVoicePage, showAdventure, showAbout, showContact };
+  const navFns = { showExplore, showPlanner, showExperience, showVoicePage, showAdventure, showSavedTrips, showAbout, showContact };
 
   return (
     <>
@@ -164,6 +166,10 @@ export default function App() {
 
       {page === 'adventure' && (
         <AdventurePage toast={toast} user={user} />
+      )}
+
+      {page === 'saved' && (
+        <SavedTripsPage user={user} openAuth={openAuth} showPlanner={showPlanner} showAdventure={showAdventure} />
       )}
 
       {page === 'about' && (
