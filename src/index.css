@@ -1788,3 +1788,83 @@ footer.site-footer {
 @media (max-width: 420px) {
   .dest-grid-new { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════
+   SMART FILTERS — EXPLORE PAGE
+   ═══════════════════════════════════════ */
+
+/* Voice filter strip */
+.voice-filter-strip {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  background: #f0f7f4; border: 1px solid #c6e0d4;
+  border-radius: 12px; padding: 10px 16px;
+  margin-bottom: 20px;
+}
+.vf-label { font-size: 12px; font-weight: 700; color: #1b4d31; }
+.vf-chip {
+  background: #fff; border: 1px solid #c6e0d4;
+  border-radius: 100px; padding: 4px 12px;
+  font-size: 12px; font-weight: 600; color: #1b4d31;
+}
+.vf-clear {
+  margin-left: auto; font-size: 12px; font-weight: 600;
+  color: #888; background: none; border: none; cursor: pointer;
+  font-family: inherit;
+}
+.vf-clear:hover { color: #e05a2b; }
+
+/* Smart filter row */
+.smart-filter-row {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 12px; margin-bottom: 20px;
+}
+.sf-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sf-label {
+  font-size: 12px; font-weight: 700; color: #888;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-right: 4px; white-space: nowrap;
+}
+.sf-chip {
+  padding: 6px 14px; border-radius: 100px;
+  border: 1.5px solid var(--color-line);
+  background: #fff; font-size: 12px; font-weight: 600;
+  color: var(--color-gray); cursor: pointer;
+  transition: all 0.15s; font-family: inherit;
+}
+.sf-chip:hover { border-color: var(--color-coral); color: var(--color-coral); }
+.sf-chip.active {
+  background: var(--color-coral); border-color: var(--color-coral);
+  color: #fff;
+}
+.sf-clear {
+  margin-left: auto; font-size: 13px; font-weight: 600;
+  color: #aaa; background: none; border: none;
+  cursor: pointer; font-family: inherit;
+  padding: 6px 12px; border-radius: 100px;
+  border: 1px solid var(--color-line);
+}
+.sf-clear:hover { color: #e05a2b; border-color: #e05a2b; }
+
+/* Results count */
+.sf-results-count {
+  font-size: 13px; color: var(--color-gray);
+  margin-bottom: 16px; font-weight: 600;
+}
+
+/* Best match card */
+.dest-card.best-match {
+  border-color: var(--color-coral);
+  box-shadow: 0 0 0 2px rgba(224,90,43,0.15);
+}
+.dest-card-best {
+  position: absolute; top: 12px; right: 12px;
+  background: var(--color-coral); color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 100px;
+}
+
+@media (max-width: 600px) {
+  .smart-filter-row { gap: 8px; }
+  .sf-group { gap: 4px; }
+  .sf-clear { margin-left: 0; }
+}
