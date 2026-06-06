@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { CITIES, STYLES, VQ, img, placeholderBg, pickRegionFrom, mapBudgetTier } from '../data.js';
+import { CITIES, STYLES, VQ, img, placeholderBg, pickRegionFrom, mapBudgetTier, mapDuration, mapGroup, DURATION_RANGES } from '../data.js';
 
 const REGIONS = [
   { label: 'All', emoji: '🌍' },
@@ -9,6 +9,50 @@ const REGIONS = [
   { label: 'Africa', emoji: '🦁' },
   { label: 'Americas', emoji: '🌎' },
 ];
+
+const VIBE_FILTERS = [
+  { label: 'Adventure', emoji: '🏄' },
+  { label: 'Culture', emoji: '🏛' },
+  { label: 'Food & Drink', emoji: '🍜' },
+  { label: 'City Break', emoji: '🌆' },
+];
+
+const BUDGET_FILTERS = [
+  { label: 'Budget', emoji: '💚', max: 650 },
+  { label: 'Mid-range', emoji: '💛', max: 850 },
+  { label: 'Luxury', emoji: '❤️', max: 9999 },
+];
+
+const DURATION_FILTERS = [
+  { label: 'Weekend', emoji: '⚡', desc: '2–3 days' },
+  { label: 'One Week', emoji: '📅', desc: '4–7 days' },
+  { label: 'Two Weeks', emoji: '🗓', desc: '8–14 days' },
+  { label: 'Extended', emoji: '✈️', desc: '14+ days' },
+];
+
+
+// Parse ALL 5 voice answers into filter values
+const parseVoiceFilters = (vAns) => {
+  const filters = {};
+  // Q1: trip type → region (handled separately via pickRegionFrom)
+  // Q2: duration
+  const dur = mapDuration(vAns[1] || '');
+  if (dur) filters.duration = dur;
+  // Q3: budget
+  const budget = mapBudgetTier(vAns[2] || '');
+  if (budget) filters.budget = budget;
+  // Q4: who's coming → group
+  const group = mapGroup(vAns[3] || '');
+  if (group) filters.group = group;
+  // Q5: must-haves → vibe
+  const must = (vAns[4] || '').toLowerCase();
+  if (must.includes('adventure') || must.includes('trek') || must.includes('hike') || must.includes('sport')) filters.vibe = 'Adventure';
+  else if (must.includes('culture') || must.includes('history') || must.includes('art') || must.includes('museum') || must.includes('historical')) filters.vibe = 'Culture';
+  else if (must.includes('food') || must.includes('eat') || must.includes('cuisine')) filters.vibe = 'Food & Drink';
+  else if (must.includes('city') || must.includes('shopping') || must.includes('nightlife')) filters.vibe = 'City Break';
+  else if (must.includes('nature') || must.includes('wildlife')) filters.vibe = 'Adventure';
+  return filters;
+};
 
 // Derive vibe from activity types
 const getVibe = (city) => {
@@ -35,6 +79,10 @@ const getAvgRating = (city) => {
 
 export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeRegion, setActiveRegion] = useState('All');
+  const [activeVibe, setActiveVibe] = useState(null);
+  const [activeBudget, setActiveBudget] = useState(null);
+  const [activeDuration, setActiveDuration] = useState(null);
+  const [voiceFilters, setVoiceFilters] = useState({});
   const [hovered, setHovered] = useState(null);
 
   // ── Voice card animated height ──
@@ -150,12 +198,48 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     const trip = vAns[0] || '';
     const region = pickRegionFrom(trip);
     if (region) setActiveRegion(region);
-    const tier = mapBudgetTier(vAns[2] || '');
-    toast(`Profile set — ${tier} tier, showing ${region || 'all'} destinations`);
+    const parsed = parseVoiceFilters(vAns);
+    setVoiceFilters(parsed);
+    if (parsed.vibe) setActiveVibe(parsed.vibe);
+    if (parsed.budget) setActiveBudget(parsed.budget);
+    if (parsed.duration) setActiveDuration(parsed.duration);
     setVIdx(-1); setVAns({});
+    setTimeout(() => {
+      document.querySelector('.explore-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
   };
 
-  const filtered = activeRegion === 'All' ? CITIES : CITIES.filter(c => c.region === activeRegion);
+  const clearAllFilters = () => {
+    setActiveRegion('All');
+    setActiveVibe(null);
+    setActiveBudget(null);
+    setActiveDuration(null);
+    setVoiceFilters({});
+  };
+
+  // Soft match score — higher = better match, never removes cities
+  const getMatchScore = (city) => {
+    let score = 0;
+    const vibe = getVibe(city);
+    const price = getStartPrice(city);
+    if (activeVibe && vibe.label === activeVibe) score += 3;
+    if (activeBudget) {
+      const bf = BUDGET_FILTERS.find(b => b.label === activeBudget);
+      if (bf && price <= bf.max) score += 3;
+    }
+    if (activeDuration) {
+      const dr = DURATION_RANGES[activeDuration];
+      if (dr && city.minDays <= dr.max && city.maxDays >= dr.min) score += 3;
+    }
+    return score;
+  };
+
+  // Region = only hard filter. Vibe / Budget / Duration = soft ranking only
+  const baseFiltered = activeRegion === 'All' ? CITIES : CITIES.filter(c => c.region === activeRegion);
+  const filtered = [...baseFiltered].sort((a, b) => getMatchScore(b) - getMatchScore(a));
+  const hasActiveFilters = activeRegion !== 'All' || activeVibe || activeBudget || activeDuration;
+  // Best match = scored at least one soft filter
+  const maxScore = filtered[0] ? getMatchScore(filtered[0]) : 0;
 
   return (
     <>
@@ -306,19 +390,63 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             </button>
           </div>
 
-          {/* Region Filter */}
-          <div className="region-tabs">
-            {REGIONS.map((r) => (
-              <button
-                key={r.label}
-                className={`region-tab${activeRegion === r.label ? ' active' : ''}`}
-                onClick={() => setActiveRegion(r.label)}
-              >
-                <span className="region-emoji">{r.emoji}</span>
-                {r.label}
-              </button>
-            ))}
+          {/* Voice filter strip — shown after voice journey */}
+          {Object.keys(voiceFilters).length > 0 && (
+            <div className="voice-filter-strip">
+              <span className="vf-label">🎙 Matched from your answers:</span>
+              {voiceFilters.duration && <span className="vf-chip">{DURATION_FILTERS.find(d => d.label === voiceFilters.duration)?.emoji} {voiceFilters.duration}</span>}
+              {voiceFilters.budget && <span className="vf-chip">{BUDGET_FILTERS.find(b => b.label === voiceFilters.budget)?.emoji} {voiceFilters.budget}</span>}
+              {voiceFilters.vibe && <span className="vf-chip">{VIBE_FILTERS.find(v => v.label === voiceFilters.vibe)?.emoji} {voiceFilters.vibe}</span>}
+              <button className="vf-clear" onClick={clearAllFilters}>✕ Clear</button>
+            </div>
+          )}
+
+          {/* Filter Panel — 5 rows, one per filter */}
+          <div className="smart-filter-panel">
+            <div className="sf-row">
+              <span className="sf-group-label">Region</span>
+              {REGIONS.map((r) => (
+                <button key={r.label} className={`sf-chip${activeRegion === r.label ? ' active' : ''}`} onClick={() => setActiveRegion(r.label)}>
+                  {r.emoji} {r.label}
+                </button>
+              ))}
+            </div>
+            <div className="sf-row">
+              <span className="sf-group-label">Vibe</span>
+              {VIBE_FILTERS.map(v => (
+                <button key={v.label} className={`sf-chip${activeVibe === v.label ? ' active' : ''}`} onClick={() => setActiveVibe(activeVibe === v.label ? null : v.label)}>
+                  {v.emoji} {v.label}
+                </button>
+              ))}
+            </div>
+            <div className="sf-row">
+              <span className="sf-group-label">Budget</span>
+              {BUDGET_FILTERS.map(b => (
+                <button key={b.label} className={`sf-chip${activeBudget === b.label ? ' active' : ''}`} onClick={() => setActiveBudget(activeBudget === b.label ? null : b.label)}>
+                  {b.emoji} {b.label}
+                </button>
+              ))}
+            </div>
+            <div className="sf-row">
+              <span className="sf-group-label">Duration</span>
+              {DURATION_FILTERS.map(d => (
+                <button key={d.label} className={`sf-chip${activeDuration === d.label ? ' active' : ''}`} onClick={() => setActiveDuration(activeDuration === d.label ? null : d.label)}>
+                  {d.emoji} {d.label} <span className="sf-chip-desc">{d.desc}</span>
+                </button>
+              ))}
+              {hasActiveFilters && (
+                <button className="sf-clear-btn" onClick={clearAllFilters}>✕ Clear all</button>
+              )}
+            </div>
           </div>
+
+          {/* Results count */}
+          {hasActiveFilters && (
+            <div className="sf-results-count">
+              {activeRegion !== 'All' ? <><b>{filtered.length}</b> destinations in {activeRegion}</> : <><b>{filtered.length}</b> destinations</>}
+              {(activeVibe || activeBudget || activeDuration) && <> — sorted by best match</>}
+            </div>
+          )}
 
           {/* Cards Grid */}
           <div className="dest-grid-new">
@@ -326,9 +454,11 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
               const vibe = getVibe(c);
               const price = getStartPrice(c);
               const rating = getAvgRating(c);
+              const score = getMatchScore(c);
+              const isBestMatch = hasActiveFilters && maxScore > 0 && score === maxScore && score > 0;
               return (
                 <div
-                  className={`dest-card${hovered === c.name ? ' hovered' : ''}`}
+                  className={`dest-card${hovered === c.name ? ' hovered' : ''}${isBestMatch ? ' best-match' : ''}`}
                   key={c.name}
                   onClick={() => openCity(c.name)}
                   onMouseEnter={() => setHovered(c.name)}
@@ -345,7 +475,8 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
                     <div className="dest-card-vibe">
                       <span>{vibe.emoji}</span> {vibe.label}
                     </div>
-                    {rating && (
+                    {isBestMatch && <div className="dest-card-best">⭐ Best match</div>}
+                    {!isBestMatch && rating && (
                       <div className="dest-card-rating">⭐ {rating}</div>
                     )}
                   </div>
