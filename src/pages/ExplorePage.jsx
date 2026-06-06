@@ -37,6 +37,23 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeRegion, setActiveRegion] = useState('All');
   const [hovered, setHovered] = useState(null);
 
+  // ── Voice card animated height ──
+  const [cardHeight, setCardHeight] = useState(null);
+  const innerRef = useRef(null);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (!innerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const h = entry.contentRect.height;
+        setCardHeight(h + 56); // 28px padding top + bottom
+      }
+    });
+    observer.observe(innerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // ── Voice card state ──
   const [vIdx, setVIdx] = useState(-1);
   const [vAns, setVAns] = useState({});
@@ -159,10 +176,8 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             </div>
           </div>
 
-          {/* Voice Card — min-height drives smooth size transition */}
-          <div className="voice-card" style={{
-            minHeight: vIdx === -1 ? 280 : vIdx === 5 ? 420 : 400
-          }}>
+          <div className="voice-card" ref={cardRef} style={{ height: cardHeight ? `${cardHeight}px` : 'auto' }}>
+          <div className="vc-inner" ref={innerRef}>
             <div className="vc-top">
               <span className="ttl">✦ Trailmind Voice</span>
               {listening && <span className="live">LISTENING</span>}
@@ -249,7 +264,8 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
                 </button>
               </div>
             )}
-          </div>
+          </div>{/* end vc-inner */}
+          </div>{/* end voice-card */}
         </div>
       </section>
 
