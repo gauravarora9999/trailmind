@@ -41,7 +41,11 @@ export default function AuthModal({ mode, onClose, onSwap }) {
     setError('');
     setLoading(true);
     try {
-      const { error: err } = await supabase.auth.signInWithOAuth({ provider });
+      const redirectTo = window.location.origin;
+      const { error: err } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo },
+      });
       if (err) throw err;
     } catch (err) {
       setError(err.message || 'OAuth failed');
