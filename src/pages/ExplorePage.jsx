@@ -399,24 +399,27 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             </div>
           )}
 
-          {/* Region Filter */}
-          <div className="region-tabs">
-            {REGIONS.map((r) => (
-              <button
-                key={r.label}
-                className={`region-tab${activeRegion === r.label ? ' active' : ''}`}
-                onClick={() => setActiveRegion(r.label)}
-              >
-                <span className="region-emoji">{r.emoji}</span>
-                {r.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Vibe + Budget filters */}
-          <div className="smart-filter-row">
+          {/* Filter Panel — region + vibe + budget in one clean box */}
+          <div className="smart-filter-panel">
+            {/* Region */}
             <div className="sf-group">
-              <span className="sf-label">Vibe</span>
+              <span className="sf-group-label">Region</span>
+              {REGIONS.map((r) => (
+                <button
+                  key={r.label}
+                  className={`sf-chip${activeRegion === r.label ? ' active' : ''}`}
+                  onClick={() => setActiveRegion(r.label)}
+                >
+                  {r.emoji} {r.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="sf-divider" />
+
+            {/* Vibe */}
+            <div className="sf-group">
+              <span className="sf-group-label">Vibe</span>
               {VIBE_FILTERS.map(v => (
                 <button
                   key={v.label}
@@ -427,8 +430,12 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
                 </button>
               ))}
             </div>
+
+            <div className="sf-divider" />
+
+            {/* Budget */}
             <div className="sf-group">
-              <span className="sf-label">Budget</span>
+              <span className="sf-group-label">Budget</span>
               {BUDGET_FILTERS.map(b => (
                 <button
                   key={b.label}
@@ -439,15 +446,16 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
                 </button>
               ))}
             </div>
+
             {hasActiveFilters && (
-              <button className="sf-clear" onClick={clearAllFilters}>✕ Clear all</button>
+              <button className="sf-clear-btn" onClick={clearAllFilters}>✕ Clear</button>
             )}
           </div>
 
           {/* Results count */}
           {hasActiveFilters && (
             <div className="sf-results-count">
-              Showing {filtered.length} of {CITIES.length} destinations
+              Showing <b>{filtered.length}</b> of {CITIES.length} destinations
             </div>
           )}
 
