@@ -96,9 +96,9 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     setListening(false);
     setVAns((prev) => ({ ...prev, [currentIdx]: text }));
 
-    // Only show confirmation card for voice input
-    const delay = fromVoice ? 1500 : 0;
-    if (fromVoice) setConfirmedAnswer(text);
+    // Show confirmation for all input types, 1.5s for voice, 800ms for manual
+    const delay = fromVoice ? 1500 : 800;
+    setConfirmedAnswer(text);
 
     setTimeout(() => {
       setConfirmedAnswer('');
@@ -164,7 +164,7 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             <div className="vc-top">
               <span className="ttl">✦ Trailmind Voice</span>
               {listening && <span className="live">LISTENING</span>}
-              {confirmedAnswer && <span className="vc-confirmed-badge">✓ Got it</span>}
+              {confirmedAnswer && <span className="vc-confirmed-badge">✓ Captured</span>}
             </div>
 
             <div className="orb-wrap">
@@ -208,7 +208,7 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
                 {/* Confirmed answer display */}
                 {confirmedAnswer && (
                   <div className="vc-captured">
-                    <span className="vc-captured-label">✓ Heard</span>
+                    <span className="vc-captured-label">✓ Captured</span>
                     <span className="vc-captured-text">"{confirmedAnswer}"</span>
                   </div>
                 )}
