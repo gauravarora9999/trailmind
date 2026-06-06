@@ -14,6 +14,10 @@ import PlannerPage from './pages/PlannerPage.jsx';
 import MyTripsPage from './pages/MyTripsPage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import ContactPage from './pages/ContactPage.jsx';
+import VoicePage from './pages/VoicePage.jsx';
+import ExperiencePage from './pages/ExperiencePage.jsx';
+import AdventurePage from './pages/AdventurePage.jsx';
+import SavedTripsPage from './pages/SavedTripsPage.jsx';
 
 export default function App() {
   const navigate = useNavigate();
@@ -86,6 +90,10 @@ export default function App() {
   const showAbout = () => { navigate('/about'); scrollTop(); };
   const showContact = () => { navigate('/contact'); scrollTop(); };
   const showMyTrips = () => { navigate('/my-trips'); scrollTop(); };
+  const showVoicePage = () => { navigate('/voice'); scrollTop(); };
+  const showExperience = () => { navigate('/experience'); scrollTop(); };
+  const showAdventure = () => { navigate('/adventure'); scrollTop(); };
+  const showSavedTrips = () => { navigate('/saved-trips'); scrollTop(); };
 
   const openAuth = (mode) => setAuthMode(mode);
   const closeAuth = () => setAuthMode(null);
@@ -109,6 +117,10 @@ export default function App() {
         showPlanner={showPlanner}
         showAbout={showAbout}
         showMyTrips={showMyTrips}
+        showVoicePage={showVoicePage}
+        showExperience={showExperience}
+        showAdventure={showAdventure}
+        showSavedTrips={showSavedTrips}
         user={user}
         openAuth={openAuth}
         logout={logout}
@@ -163,6 +175,18 @@ export default function App() {
         <Route path="/contact" element={
           <ContactPage toast={toast} />
         } />
+        <Route path="/voice" element={
+          <VoicePage openPlanner={openPlanner} showExplore={showExplore} toast={toast} user={user} />
+        } />
+        <Route path="/experience" element={
+          <ExperiencePage toast={toast} user={user} showExplore={showExplore} />
+        } />
+        <Route path="/adventure" element={
+          <AdventurePage toast={toast} user={user} />
+        } />
+        <Route path="/saved-trips" element={
+          <SavedTripsPage user={user} openAuth={openAuth} showPlanner={showPlanner} showAdventure={showAdventure} />
+        } />
       </Routes>
 
       {authMode && (
@@ -184,6 +208,9 @@ export default function App() {
         showPlanner={showPlanner}
         showAbout={showAbout}
         showContact={showContact}
+        showAdventure={showAdventure}
+        showVoicePage={showVoicePage}
+        showSavedTrips={showSavedTrips}
       />
 
       <Toast msg={toastMsg} />

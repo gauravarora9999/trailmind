@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, user, openAuth, logout }) {
+export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, showVoicePage, showExperience, showAdventure, showSavedTrips, user, openAuth, logout }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const go = (fn) => { fn(); setMenuOpen(false); };
@@ -14,8 +14,11 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
 
         <div className="nav-links">
           <a onClick={() => go(showExplore)} style={{ cursor: 'pointer' }}>Explore</a>
-          <a onClick={() => go(showPlanner)} style={{ cursor: 'pointer' }}>Plan a Trip</a>
-          {user && <a onClick={() => go(showMyTrips)} style={{ cursor: 'pointer' }}>My Trips</a>}
+          <a onClick={() => go(showPlanner)} style={{ cursor: 'pointer' }}>AI Planner</a>
+          <a onClick={() => go(showVoicePage)} style={{ cursor: 'pointer' }}>Plan by Voice</a>
+          <a onClick={() => go(showExperience)} style={{ cursor: 'pointer' }}>Experience</a>
+          <a onClick={() => go(showAdventure)} style={{ cursor: 'pointer', color: 'var(--color-coral)', fontWeight: 700 }}>Adventure AI</a>
+          {user && <a onClick={() => go(showSavedTrips)} style={{ cursor: 'pointer' }}>My Trips</a>}
           <a onClick={() => go(showAbout)} style={{ cursor: 'pointer' }}>About</a>
         </div>
 
@@ -42,8 +45,11 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
       {menuOpen && (
         <div className="mobile-menu">
           <a onClick={() => go(showExplore)}>Explore</a>
-          <a onClick={() => go(showPlanner)}>Plan a Trip</a>
-          {user && <a onClick={() => go(showMyTrips)}>My Trips</a>}
+          <a onClick={() => go(showPlanner)}>AI Planner</a>
+          <a onClick={() => go(showVoicePage)}>Plan by Voice</a>
+          <a onClick={() => go(showExperience)}>Experience</a>
+          <a onClick={() => go(showAdventure)} style={{ color: 'var(--color-coral)', fontWeight: 700 }}>Adventure AI</a>
+          {user && <a onClick={() => go(showSavedTrips)}>My Trips</a>}
           <a onClick={() => go(showAbout)}>About</a>
           <div className="mobile-auth">
             {user ? (
