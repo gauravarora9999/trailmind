@@ -153,4 +153,4 @@ Risk Tolerance: ${profile.risk_tolerance}
   }
 };
 
-export const config = { path: '/api/adventure-plan' };
+export const config = { path: '/api/adventure-plan', timeout: 30 };

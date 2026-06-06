@@ -3,7 +3,7 @@ import { supabase } from '../supabase.js';
 
 const GREETING = {
   role: 'assistant',
-  content: "Hey there! I'm your Trailmind Adventure Sport AI — think of me as your personal expedition planner, risk assessor, and adventure coach all in one. I'll help you design a safe, thrilling, and totally personalised adventure plan. Ready to get started? What's your name?",
+  content: "Hey! 🏔 I'm your Trailmind Adventure AI — expedition planner, risk assessor, and adventure coach in one. Let's build something epic. What's your name?",
   action: null,
 };
 
@@ -353,6 +353,7 @@ export default function AdventurePage({ toast, user }) {
   const [profileConfirmed, setProfileConfirmed] = useState(false);
   const [fieldProgress, setFieldProgress] = useState(0);
   const [showDemo, setShowDemo] = useState(false);
+  const [suggestions, setSuggestions] = useState(["I'm ready — let's go! 🚀", "Show me a sample plan first 👁"]);
 
   const bottomRef = useRef(null);
   const recognRef = useRef(null);
@@ -408,6 +409,7 @@ export default function AdventurePage({ toast, user }) {
     const updated = [...messages, userMsg];
     setMessages(updated);
     setInput('');
+    setSuggestions([]);
     setLoading(true);
 
     try {
@@ -440,6 +442,7 @@ export default function AdventurePage({ toast, user }) {
 
       setMessages(prev => [...prev, aiMsg]);
       speak(data.message || '');
+      setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
 
       if (data.action === 'show_plan' && data.profile) {
         saveToSupabase(data.profile);
@@ -551,6 +554,7 @@ export default function AdventurePage({ toast, user }) {
 
   const loadDemo = useCallback(() => {
     setShowDemo(true);
+    setSuggestions([]);
     setCurrentProfile(DEMO_PROFILE);
     setFieldProgress(TOTAL_FIELDS);
     setMessages([
@@ -592,6 +596,7 @@ export default function AdventurePage({ toast, user }) {
               {showDemo && (
                 <button className="adv-demo-reset" onClick={() => {
                   setShowDemo(false); setFieldProgress(0); setCurrentProfile(null); setProfileConfirmed(false);
+                  setSuggestions(["I'm ready — let's go! 🚀", "Show me a sample plan first 👁"]);
                   setMessages([{ role: 'assistant', content: GREETING.content, action: null, profile: null, plan: null }]);
                 }}>← Start my plan</button>
               )}
@@ -655,6 +660,24 @@ export default function AdventurePage({ toast, user }) {
             )}
             <div ref={bottomRef} />
           </div>
+
+          {suggestions.length > 0 && !loading && (
+            <div className="adv-suggestions">
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  className="adv-suggestion-chip"
+                  onClick={() => {
+                    setSuggestions([]);
+                    if (s.includes('sample plan')) { loadDemo(); }
+                    else { sendMessage(s); }
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="adv-input-row">
             <button

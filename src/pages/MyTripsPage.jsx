@@ -57,9 +57,45 @@ function TripDetail({ trip, onClose }) {
   );
 }
 
-function AdventureCard({ profile }) {
+function AdventureDetail({ profile, onClose }) {
+  const rows = [
+    ['🧗 Sport', profile.adventure_sport],
+    ['📍 Location', profile.planned_location],
+    ['🏠 Home City', profile.home_city],
+    ['🎂 Age', profile.age],
+    ['💪 Fitness', profile.fitness_level],
+    ['🎯 Risk Tolerance', profile.risk_tolerance],
+    ['📅 Available Days', profile.available_days ? `${profile.available_days} days` : null],
+    ['🏅 Certifications', profile.certifications],
+    ['🚗 License', profile.driving_license_type ? `${profile.driving_license_type}${profile.license_issued_in ? ` (${profile.license_issued_in})` : ''}` : null],
+    ['💰 Budget', profile.budget ? `${profile.preferred_currency || ''} ${Number(profile.budget).toLocaleString()}` : null],
+  ];
   return (
-    <div className="mt-card adventure">
+    <div className="trip-detail-overlay" onClick={onClose}>
+      <div className="trip-detail-modal" onClick={e => e.stopPropagation()}>
+        <div className="trip-detail-header">
+          <div>
+            <h2>{profile.adventure_sport}</h2>
+            <div className="trip-detail-meta">{profile.planned_location}</div>
+          </div>
+          <button className="trip-detail-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="adv-detail-rows">
+          {rows.filter(([, v]) => v).map(([label, value]) => (
+            <div className="adv-detail-row" key={label}>
+              <span className="adv-detail-label">{label}</span>
+              <span className="adv-detail-value">{value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdventureCard({ profile, onClick }) {
+  return (
+    <div className="mt-card adventure mt-card-clickable" onClick={onClick}>
       <div className="mt-card-header">
         <div>
           <div className="mt-city">{profile.adventure_sport}</div>
@@ -78,6 +114,7 @@ function AdventureCard({ profile }) {
       )}
       <div className="mt-card-footer">
         <span className="mt-date">{new Date(profile.created_at_utc).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+        <span className="mt-view-hint">Tap to view →</span>
       </div>
     </div>
   );
@@ -92,6 +129,7 @@ export default function MyTripsPage({ user, toast, showExplore, openPlanner }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState(defaultTab);
   const [viewingTrip, setViewingTrip] = useState(null);
+  const [viewingAdventure, setViewingAdventure] = useState(null);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -219,13 +257,14 @@ export default function MyTripsPage({ user, toast, showExplore, openPlanner }) {
             </div>
           ) : (
             <div className="mt-grid">
-              {adventures.map(a => <AdventureCard key={a.id} profile={a} />)}
+              {adventures.map(a => <AdventureCard key={a.id} profile={a} onClick={() => setViewingAdventure(a)} />)}
             </div>
           )
         )}
       </div>
 
       {viewingTrip && <TripDetail trip={viewingTrip} onClose={() => setViewingTrip(null)} />}
+      {viewingAdventure && <AdventureDetail profile={viewingAdventure} onClose={() => setViewingAdventure(null)} />}
     </div>
   );
 }

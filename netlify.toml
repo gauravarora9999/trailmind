@@ -4,6 +4,13 @@
 
 [functions]
   directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions."adventure"]
+  timeout = 30
+
+[functions."adventure-plan"]
+  timeout = 30
 
 [[redirects]]
   from = "/*"

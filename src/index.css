@@ -1390,6 +1390,37 @@ footer.site-footer {
   30% { transform: translateY(-6px); }
 }
 
+/* Suggestion Chips */
+.adv-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px 4px;
+  background: #fff;
+  animation: fadeInUp 0.25s ease;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.adv-suggestion-chip {
+  padding: 7px 14px;
+  border-radius: 100px;
+  border: 1.5px solid #e05a2b;
+  background: #fff7f5;
+  color: #e05a2b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.12s;
+  white-space: nowrap;
+}
+.adv-suggestion-chip:hover {
+  background: #e05a2b;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
 /* Input Row */
 .adv-input-row {
   padding: 12px 16px;
@@ -1996,6 +2027,12 @@ footer.site-footer {
 .tdb-title { font-weight: 700; font-size: 13px; margin-bottom: 10px; }
 .tdb-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #f0f0f4; color: var(--color-gray); }
 .tdb-total { display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; padding-top: 10px; color: var(--color-ink); }
+
+/* Adventure detail modal rows */
+.adv-detail-rows { display: flex; flex-direction: column; gap: 0; margin-top: 16px; }
+.adv-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f4; font-size: 14px; }
+.adv-detail-label { color: #888; font-weight: 500; }
+.adv-detail-value { font-weight: 600; color: #1a1a2e; text-align: right; }
 
 /* Adventure plan CTA */
 .adv-plan-cta { margin-top: 12px; display: flex; gap: 10px; }
