@@ -1,9 +1,22 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, showVoicePage, showExperience, showAdventure, showSavedTrips, user, openAuth, logout }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  const path = location.pathname;
 
   const go = (fn) => { fn(); setMenuOpen(false); };
+
+  const link = (label, fn, route) => (
+    <a
+      onClick={() => go(fn)}
+      style={{ cursor: 'pointer' }}
+      className={path === route ? 'nav-active' : ''}
+    >
+      {label}
+    </a>
+  );
 
   return (
     <nav className="site-nav">
@@ -13,13 +26,19 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
         </div>
 
         <div className="nav-links">
-          <a onClick={() => go(showExplore)} style={{ cursor: 'pointer' }}>Explore</a>
-          <a onClick={() => go(showPlanner)} style={{ cursor: 'pointer' }}>AI Planner</a>
-          <a onClick={() => go(showVoicePage)} style={{ cursor: 'pointer' }}>Plan by Voice</a>
-          <a onClick={() => go(showExperience)} style={{ cursor: 'pointer' }}>Experience</a>
-          <a onClick={() => go(showAdventure)} style={{ cursor: 'pointer', color: 'var(--color-coral)', fontWeight: 700 }}>Adventure AI</a>
-          {user && <a onClick={() => go(showSavedTrips)} style={{ cursor: 'pointer' }}>My Trips</a>}
-          <a onClick={() => go(showAbout)} style={{ cursor: 'pointer' }}>About</a>
+          {link('Explore', showExplore, '/')}
+          {link('AI Planner', showPlanner, '/planner')}
+          {link('Plan by Voice', showVoicePage, '/voice')}
+          {link('Experience', showExperience, '/experience')}
+          <a
+            onClick={() => go(showAdventure)}
+            style={{ cursor: 'pointer' }}
+            className={`nav-adventure-link${path === '/adventure' ? ' nav-active' : ''}`}
+          >
+            Adventure AI
+          </a>
+          {user && link('My Trips', showSavedTrips, '/saved-trips')}
+          {link('About', showAbout, '/about')}
         </div>
 
         <div className="nav-cta">
@@ -44,13 +63,18 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
 
       {menuOpen && (
         <div className="mobile-menu">
-          <a onClick={() => go(showExplore)}>Explore</a>
-          <a onClick={() => go(showPlanner)}>AI Planner</a>
-          <a onClick={() => go(showVoicePage)}>Plan by Voice</a>
-          <a onClick={() => go(showExperience)}>Experience</a>
-          <a onClick={() => go(showAdventure)} style={{ color: 'var(--color-coral)', fontWeight: 700 }}>Adventure AI</a>
-          {user && <a onClick={() => go(showSavedTrips)}>My Trips</a>}
-          <a onClick={() => go(showAbout)}>About</a>
+          {link('Explore', showExplore, '/')}
+          {link('AI Planner', showPlanner, '/planner')}
+          {link('Plan by Voice', showVoicePage, '/voice')}
+          {link('Experience', showExperience, '/experience')}
+          <a
+            onClick={() => go(showAdventure)}
+            className={`nav-adventure-link${path === '/adventure' ? ' nav-active' : ''}`}
+          >
+            Adventure AI
+          </a>
+          {user && link('My Trips', showSavedTrips, '/saved-trips')}
+          {link('About', showAbout, '/about')}
           <div className="mobile-auth">
             {user ? (
               <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-line)' }} onClick={() => { logout(); setMenuOpen(false); }}>Log out</button>
