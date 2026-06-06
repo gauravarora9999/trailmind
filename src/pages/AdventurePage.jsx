@@ -44,7 +44,7 @@ function ProfileCard({ profile, onConfirm, onEdit }) {
 }
 
 // ── Persona Reveal ──
-function PersonaReveal({ data, onContinue }) {
+function PersonaReveal({ data, onContinue, planReady, planLoading }) {
   const [revealed, setRevealed] = useState(false);
   useEffect(() => { setTimeout(() => setRevealed(true), 300); }, []);
   return (
@@ -67,8 +67,13 @@ function PersonaReveal({ data, onContinue }) {
           </div>
         ))}
       </div>
-      <button className="btn btn-coral" style={{ marginTop: 16, width: '100%', justifyContent: 'center' }} onClick={onContinue}>
-        🔒 Yes, lock it in — build my plan!
+      <button
+        className="btn btn-coral"
+        style={{ marginTop: 16, width: '100%', justifyContent: 'center', opacity: (!planReady && !planLoading) || planLoading ? 0.7 : 1 }}
+        onClick={onContinue}
+        disabled={planLoading || (!planReady && !planLoading)}
+      >
+        {planLoading ? '⏳ Building your plan…' : planReady ? '🔒 Yes, lock it in — show my plan!' : '🔒 Yes, lock it in — build my plan!'}
       </button>
     </div>
   );
@@ -275,6 +280,8 @@ export default function AdventurePage({ toast, user }) {
   const [showDemo, setShowDemo] = useState(false);
   const [planGenerated, setPlanGenerated] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [pendingPlan, setPendingPlan] = useState(null);
+  const [planLoading, setPlanLoading] = useState(false);
 
   const bottomRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
@@ -344,6 +351,18 @@ export default function AdventurePage({ toast, user }) {
       speak(data.message || '');
       setSuggestions(data.suggestions || []);
       if (data.action === 'show_plan' && data.profile) saveToSupabase(data.profile);
+
+      // When persona is shown, auto-fetch plan in background
+      if (data.action === 'show_persona' && data.profile) {
+        setPlanLoading(true);
+        setPendingPlan(null);
+        fetch('/api/adventure-plan', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile: data.profile }),
+        }).then(r => r.json()).then(planData => {
+          if (planData.plan) setPendingPlan(planData.plan);
+        }).catch(() => {}).finally(() => setPlanLoading(false));
+      }
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Try again.', action: null, profile: null, plan: null }]);
     } finally { setLoading(false); }
@@ -411,12 +430,11 @@ export default function AdventurePage({ toast, user }) {
   }, [currentProfile, speak, saveToSupabase]);
 
   const handlePersonaConfirm = useCallback(() => {
-    if (currentProfile?._pendingPlan) {
-      const plan = currentProfile._pendingPlan;
-      setCurrentProfile(prev => { const p = { ...prev }; delete p._pendingPlan; return p; });
-      showPlan(plan);
+    if (pendingPlan) {
+      showPlan(pendingPlan);
+      setPendingPlan(null);
     }
-  }, [currentProfile, showPlan]);
+  }, [pendingPlan, showPlan]);
 
   const handleConfirmProfile = useCallback(() => sendMessage("Yes, everything looks correct!"), [sendMessage]);
   const handleEditProfile = useCallback(() => sendMessage("I'd like to edit a field."), [sendMessage]);
@@ -523,7 +541,12 @@ export default function AdventurePage({ toast, user }) {
                     <ProfileCard profile={msg.profile} onConfirm={handleConfirmProfile} onEdit={handleEditProfile} />
                   )}
                   {msg.action === 'show_persona' && msg.persona_reveal && (
-                    <PersonaReveal data={msg.persona_reveal} onContinue={handlePersonaConfirm} />
+                    <PersonaReveal
+                      data={msg.persona_reveal}
+                      onContinue={handlePersonaConfirm}
+                      planReady={!!pendingPlan}
+                      planLoading={planLoading}
+                    />
                   )}
                   {msg.action === 'show_plan' && msg.plan && (
                     <PlanCard plan={msg.plan} onShare={handleShare} planCardRef={planCardRef} />
