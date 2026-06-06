@@ -1,6 +1,8 @@
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages';
 
-const SYSTEM_PROMPT = `You are Trailmind Adventure Sport AI — an elite adventure consultant, not a travel agent. You design transformative, safe, and achievable adventures.
+const SYSTEM_PROMPT = `CRITICAL INSTRUCTION: You MUST respond with ONLY a single valid JSON object. No text before it, no text after it, no markdown, no code fences, no explanation. Your ENTIRE response must be parseable by JSON.parse(). If you include ANY text outside the JSON object, the system will break.
+
+You are Trailmind Adventure Sport AI — an elite adventure consultant, not a travel agent. You design transformative, safe, and achievable adventures.
 
 ## Identity
 You are part expedition planner, part risk assessor, part adventure coach. Warm, professional, energetic.
@@ -189,7 +191,20 @@ export default async (req) => {
     const data = await resp.json();
     const text = data.content[0].text;
     let parsed;
-    try { parsed = JSON.parse(text); } catch { parsed = { message: text, action: null, profile: null, plan: null }; }
+    try {
+      // Try direct parse first
+      parsed = JSON.parse(text);
+    } catch {
+      // Extract JSON object from anywhere in the response
+      const match = text.match(/\{[\s\S]*\}/);
+      if (match) {
+        try { parsed = JSON.parse(match[0]); } catch { parsed = null; }
+      }
+      // Fallback — treat whole text as message
+      if (!parsed) parsed = { message: text.replace(/\{[\s\S]*\}/, '').trim() || text, action: null, profile: null, plan: null, suggestions: [] };
+    }
+    // Safety — ensure suggestions is always an array
+    if (!Array.isArray(parsed.suggestions)) parsed.suggestions = [];
     return Response.json(parsed);
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
