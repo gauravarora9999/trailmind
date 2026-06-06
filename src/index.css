@@ -2010,3 +2010,13 @@ footer.site-footer {
 .mt-card-clickable { cursor: pointer; }
 .mt-card-clickable:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-2px); }
 .mt-view-hint { font-size: 12px; font-weight: 700; color: var(--color-coral); }
+
+/* My Trips zero state */
+.mt-zero-state {
+  text-align: center;
+  padding: 80px 24px;
+}
+.mt-zero-icon { font-size: 64px; margin-bottom: 20px; }
+.mt-zero-state h2 { font-size: 24px; font-weight: 900; margin-bottom: 10px; }
+.mt-zero-state p { color: var(--color-gray); font-size: 15px; margin-bottom: 28px; max-width: 360px; margin-left: auto; margin-right: auto; }
+.mt-zero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }

@@ -95,18 +95,24 @@ export default function MyTripsPage({ user, toast, showExplore, openPlanner }) {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
+    const timer = setTimeout(() => setLoading(false), 8000); // safety fallback
     (async () => {
       setLoading(true);
-      const [{ data: t, error: te }, { data: a, error: ae }] = await Promise.all([
-        supabase.from('saved_trips').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('adventure_profiles').select('*').eq('user_id', user.id).order('created_at_utc', { ascending: false }),
-      ]);
-      if (te) toast('Failed to load trips: ' + te.message);
-      if (ae) console.error('Adventure load failed:', ae.message);
-      setTrips(t || []);
-      setAdventures(a || []);
-      setLoading(false);
+      try {
+        const [{ data: t }, { data: a }] = await Promise.all([
+          supabase.from('saved_trips').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+          supabase.from('adventure_profiles').select('*').eq('user_id', user.id).order('created_at_utc', { ascending: false }),
+        ]);
+        setTrips(t || []);
+        setAdventures(a || []);
+      } catch (e) {
+        console.error('Failed to load trips:', e);
+      } finally {
+        clearTimeout(timer);
+        setLoading(false);
+      }
     })();
+    return () => clearTimeout(timer);
   }, [user]);
 
   const deleteTrip = async (id) => {
@@ -155,6 +161,16 @@ export default function MyTripsPage({ user, toast, showExplore, openPlanner }) {
         {loading ? (
           <div className="mt-skeleton-grid">
             {[1, 2, 3].map(i => <div key={i} className="mt-skeleton" />)}
+          </div>
+        ) : !loading && trips.length === 0 && adventures.length === 0 ? (
+          <div className="mt-zero-state">
+            <div className="mt-zero-icon">🗺️</div>
+            <h2>No trips saved yet</h2>
+            <p>Start planning — your saved trips and adventure plans will all appear here.</p>
+            <div className="mt-zero-actions">
+              <button className="btn btn-coral" onClick={showExplore}>Explore destinations</button>
+              <a href="/adventure" className="btn btn-ghost" style={{ border: '1px solid var(--color-line)', textDecoration: 'none' }}>Try Adventure AI</a>
+            </div>
           </div>
         ) : tab === 'trips' ? (
           trips.length === 0 ? (
