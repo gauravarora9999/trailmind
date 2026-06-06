@@ -634,7 +634,7 @@ export default function AdventurePage({ toast, user }) {
                   )}
                   {msg.action === 'show_cta' && (
                     <div className="adv-plan-cta">
-                      <a href="/my-trips" className="btn btn-coral" style={{ fontSize: 13, padding: '8px 20px', textDecoration: 'none' }}>
+                      <a href="/my-trips?tab=adventures" className="btn btn-coral" style={{ fontSize: 13, padding: '8px 20px', textDecoration: 'none' }}>
                         View in My Trips →
                       </a>
                     </div>

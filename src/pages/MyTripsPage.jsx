@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '../supabase.js';
 import { money } from '../data.js';
 
@@ -83,10 +84,13 @@ function AdventureCard({ profile }) {
 }
 
 export default function MyTripsPage({ user, toast, showExplore, openPlanner }) {
+  const location = useLocation();
+  const defaultTab = new URLSearchParams(location.search).get('tab') === 'adventures' ? 'adventures' : 'trips';
+
   const [trips, setTrips] = useState([]);
   const [adventures, setAdventures] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('trips');
+  const [tab, setTab] = useState(defaultTab);
   const [viewingTrip, setViewingTrip] = useState(null);
 
   useEffect(() => {
