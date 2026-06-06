@@ -1,4 +1,4 @@
-export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, user, openAuth, logout }) {
+export default function Nav({ showExplore, showPlanner, showExperience, showVoicePage, showAdventure, user, openAuth, logout }) {
   return (
     <nav className="site-nav">
       <div className="wrap nav-in">
@@ -11,6 +11,7 @@ export default function Nav({ showExplore, showPlanner, showExperience, showVoic
           <a onClick={showPlanner} style={{ cursor: 'pointer' }}>AI Planner</a>
           <a onClick={showExperience} style={{ cursor: 'pointer' }}>Experience Center</a>
           <a onClick={showVoicePage} style={{ cursor: 'pointer' }}>Plan by Voice</a>
+          <a onClick={showAdventure} style={{ cursor: 'pointer', color: '#e05a2b', fontWeight: 600 }}>Adventure AI</a>
         </div>
 
         <div className="nav-cta">
