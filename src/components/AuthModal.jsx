@@ -1,33 +1,14 @@
 import { useState } from 'react';
 import { supabase } from '../supabase.js';
 
-// Password strength checker
-const getPasswordStrength = (pw) => {
-  if (!pw) return null;
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
-  if (score <= 1) return { label: 'Weak', color: '#ef4444', width: '25%' };
-  if (score === 2) return { label: 'Fair', color: '#f59e0b', width: '50%' };
-  if (score === 3) return { label: 'Good', color: '#3b82f6', width: '75%' };
-  return { label: 'Strong', color: '#22c55e', width: '100%' };
-};
-
 export default function AuthModal({ mode, onClose, onSwap }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
-  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState('form'); // 'form' | 'otp'
-  const [resending, setResending] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
 
   const isSignup = mode === 'signup';
-  const strength = isSignup ? getPasswordStrength(pw) : null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,11 +19,13 @@ export default function AuthModal({ mode, onClose, onSwap }) {
         const { error: err } = await supabase.auth.signUp({
           email,
           password: pw,
-          options: { data: { name } }
+          options: { data: { name } },
         });
         if (err) throw err;
-        // Supabase sends OTP email — show OTP input
-        setStep('otp');
+        // Auto sign-in after signup (works when email confirmation is disabled in Supabase)
+        const { error: loginErr } = await supabase.auth.signInWithPassword({ email, password: pw });
+        if (loginErr) throw loginErr;
+        onClose();
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password: pw });
         if (err) throw err;
@@ -52,44 +35,6 @@ export default function AuthModal({ mode, onClose, onSwap }) {
       setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e) => {
-    e.preventDefault();
-    if (otp.length !== 6) { setError('Please enter the 6-digit code'); return; }
-    setError('');
-    setLoading(true);
-    try {
-      const { error: err } = await supabase.auth.verifyOtp({
-        email,
-        token: otp,
-        type: 'email',
-      });
-      if (err) throw err;
-      onClose();
-    } catch (err) {
-      setError(err.message || 'Invalid code. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setResending(true);
-    setError('');
-    try {
-      const { error: err } = await supabase.auth.resend({ type: 'signup', email });
-      if (err) throw err;
-      // Start 60s cooldown
-      setResendCooldown(60);
-      const iv = setInterval(() => {
-        setResendCooldown(n => { if (n <= 1) { clearInterval(iv); return 0; } return n - 1; });
-      }, 1000);
-    } catch (err) {
-      setError(err.message || 'Could not resend code');
-    } finally {
-      setResending(false);
     }
   };
 
@@ -108,53 +53,6 @@ export default function AuthModal({ mode, onClose, onSwap }) {
     }
   };
 
-  // ── OTP verification screen ──
-  if (step === 'otp') {
-    return (
-      <div className="modal" onClick={onClose}>
-        <div className="auth" onClick={e => e.stopPropagation()}>
-          <button className="x" onClick={onClose}>&times;</button>
-
-          <div style={{ textAlign: 'center', padding: '12px 0 24px' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
-            <h3>Check your email</h3>
-            <p className="asub" style={{ marginTop: 8 }}>
-              We sent a confirmation link to<br /><strong>{email}</strong>
-            </p>
-            <p style={{ fontSize: 13, color: 'var(--color-gray)', marginTop: 16, lineHeight: 1.6 }}>
-              Click the link in the email to verify your account.<br />
-              Then come back and log in.
-            </p>
-          </div>
-
-          <button className="btn btn-coral" style={{ width: '100%', justifyContent: 'center' }}
-            onClick={() => { onSwap('login'); }}>
-            Go to Log in
-          </button>
-
-          <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'var(--color-gray)' }}>
-            Didn&apos;t receive it?{' '}
-            {resendCooldown > 0 ? (
-              <span>Resend in {resendCooldown}s</span>
-            ) : (
-              <span onClick={handleResend}
-                style={{ color: 'var(--color-coral)', cursor: resending ? 'default' : 'pointer', fontWeight: 600 }}>
-                {resending ? 'Sending...' : 'Resend email'}
-              </span>
-            )}
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: 12 }}>
-            <span onClick={() => setStep('form')} style={{ fontSize: 13, color: 'var(--color-gray)', cursor: 'pointer' }}>
-              ← Back
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Sign up / Log in form ──
   return (
     <div className="modal" onClick={onClose}>
       <div className="auth" onClick={(e) => e.stopPropagation()}>
@@ -163,13 +61,17 @@ export default function AuthModal({ mode, onClose, onSwap }) {
         <h3>{isSignup ? 'Create account' : 'Welcome back'}</h3>
         <p className="asub">{isSignup ? 'Start planning smarter trips' : 'Log in to your Trailmind account'}</p>
 
-        {error && <div style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, marginBottom: 12, padding: '8px 12px', background: '#FEF2F2', borderRadius: 8 }}>{error}</div>}
+        {error && (
+          <div style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, marginBottom: 12, padding: '8px 12px', background: '#FEF2F2', borderRadius: 8 }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           {isSignup && (
             <>
               <label>Name</label>
-              <input type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
+              <input type="text" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} required />
             </>
           )}
           <label>Email</label>
@@ -177,18 +79,12 @@ export default function AuthModal({ mode, onClose, onSwap }) {
           <label>Password</label>
           <input type="password" placeholder="••••••••" value={pw} onChange={(e) => setPw(e.target.value)} required minLength={6} />
 
-          {/* Password strength bar */}
-          {isSignup && pw && strength && (
-            <div style={{ marginTop: 6, marginBottom: 4 }}>
-              <div style={{ height: 4, background: '#f0f0f4', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: strength.width, background: strength.color, borderRadius: 4, transition: 'width 0.3s ease' }} />
-              </div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: strength.color, marginTop: 4 }}>{strength.label}</div>
-            </div>
-          )}
-
-          <button className="btn btn-coral" type="submit" disabled={loading}
-            style={{ width: '100%', marginTop: '20px', justifyContent: 'center', opacity: loading ? 0.6 : 1 }}>
+          <button
+            className="btn btn-coral"
+            type="submit"
+            disabled={loading}
+            style={{ width: '100%', marginTop: '20px', justifyContent: 'center', opacity: loading ? 0.6 : 1 }}
+          >
             {loading ? 'Please wait...' : isSignup ? 'Create account' : 'Log in'}
           </button>
         </form>
