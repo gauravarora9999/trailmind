@@ -2020,3 +2020,106 @@ footer.site-footer {
 .mt-zero-state h2 { font-size: 24px; font-weight: 900; margin-bottom: 10px; }
 .mt-zero-state p { color: var(--color-gray); font-size: 15px; margin-bottom: 28px; max-width: 360px; margin-left: auto; margin-right: auto; }
 .mt-zero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════
+   ADVENTURE AI V2 — PERSONA + STREAMING + REFINEMENT
+   ═══════════════════════════════════════ */
+
+/* Persona Reveal */
+.persona-reveal {
+  margin-top: 12px;
+  background: linear-gradient(135deg, #0e1726, #1b3a2f);
+  border-radius: 14px;
+  padding: 20px;
+  color: #fff;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.persona-reveal.revealed { opacity: 1; transform: translateY(0); }
+.pr-emoji { font-size: 48px; margin-bottom: 8px; }
+.pr-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; }
+.pr-name { font-size: 28px; font-weight: 900; letter-spacing: -1px; margin: 4px 0; }
+.pr-tagline { font-size: 13px; color: rgba(255,255,255,0.7); font-style: italic; margin-bottom: 16px; line-height: 1.5; }
+.pr-dims { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.pr-dim { display: flex; align-items: center; gap: 8px; }
+.pr-dim-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); width: 110px; text-align: left; flex-shrink: 0; }
+.pr-dim-track { flex: 1; height: 6px; background: rgba(255,255,255,0.15); border-radius: 10px; overflow: hidden; }
+.pr-dim-fill { height: 100%; background: linear-gradient(90deg, #e05a2b, #ff8c5a); border-radius: 10px; width: 0; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+.pr-dim-score { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); width: 30px; text-align: right; }
+
+/* Seasonal / Companion intel strips */
+.plan-intel-strip {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  border-bottom: 1px solid #f0f0f4;
+}
+.plan-intel-strip.seasonal { background: #fffbeb; color: #92400e; }
+.plan-intel-strip.companion { background: #f0f9ff; color: #0369a1; }
+
+/* Streaming tab loading state */
+.plan-tab-loading { opacity: 0.4; cursor: default !important; }
+.plan-tab-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #ccc;
+  margin-left: 4px;
+  animation: adv-bounce 1.2s infinite;
+}
+
+/* Tab content fade-in animation */
+.plan-tab-anim {
+  animation: tabFadeIn 0.35s ease;
+}
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Alternative plan comparison */
+.plan-alt-comparison {
+  margin-top: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, #0e1726, #1b3a2f);
+  border-radius: 12px;
+  color: #fff;
+}
+.pac-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #e05a2b; margin-bottom: 6px; }
+.pac-name { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+.pac-loc { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+.pac-why { font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.5; margin-bottom: 8px; }
+.pac-diff { font-size: 11px; font-weight: 700; color: #e05a2b; }
+
+/* Share button */
+.plan-share-btn {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 16px; width: 100%;
+  padding: 10px; border-radius: 10px;
+  background: #f0f9ff; border: 1px solid #bae6fd;
+  color: #0369a1; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.plan-share-btn:hover { background: #e0f2fe; }
+
+/* Refine banner */
+.adv-refine-banner {
+  background: linear-gradient(135deg, #fff8ec, #fff3e0);
+  border-bottom: 1px solid #fed7aa;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #92400e;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .pr-name { font-size: 22px; }
+  .pr-dim-label { width: 90px; }
+  .pac-name { font-size: 14px; }
+}
