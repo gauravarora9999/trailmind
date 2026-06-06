@@ -115,42 +115,31 @@ export default function AuthModal({ mode, onClose, onSwap }) {
         <div className="auth" onClick={e => e.stopPropagation()}>
           <button className="x" onClick={onClose}>&times;</button>
 
-          <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📬</div>
+          <div style={{ textAlign: 'center', padding: '12px 0 24px' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
             <h3>Check your email</h3>
-            <p className="asub">We sent a 6-digit code to <strong>{email}</strong></p>
+            <p className="asub" style={{ marginTop: 8 }}>
+              We sent a confirmation link to<br /><strong>{email}</strong>
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--color-gray)', marginTop: 16, lineHeight: 1.6 }}>
+              Click the link in the email to verify your account.<br />
+              Then come back and log in.
+            </p>
           </div>
 
-          {error && <div style={{ color: '#EF4444', fontSize: 13, fontWeight: 600, marginBottom: 12, padding: '8px 12px', background: '#FEF2F2', borderRadius: 8 }}>{error}</div>}
-
-          <form onSubmit={handleVerifyOtp}>
-            <label>Verification code</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="000000"
-              value={otp}
-              onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-              style={{ letterSpacing: 8, fontSize: 24, textAlign: 'center', fontWeight: 700 }}
-              autoFocus
-            />
-            <button className="btn btn-coral" type="submit" disabled={loading || otp.length !== 6}
-              style={{ width: '100%', marginTop: 20, justifyContent: 'center', opacity: (loading || otp.length !== 6) ? 0.6 : 1 }}>
-              {loading ? 'Verifying...' : 'Verify & continue'}
-            </button>
-          </form>
+          <button className="btn btn-coral" style={{ width: '100%', justifyContent: 'center' }}
+            onClick={() => { onSwap('login'); }}>
+            Go to Log in
+          </button>
 
           <div style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'var(--color-gray)' }}>
             Didn&apos;t receive it?{' '}
             {resendCooldown > 0 ? (
               <span>Resend in {resendCooldown}s</span>
             ) : (
-              <span
-                onClick={handleResend}
-                style={{ color: 'var(--color-coral)', cursor: resending ? 'default' : 'pointer', fontWeight: 600 }}
-              >
-                {resending ? 'Sending...' : 'Resend code'}
+              <span onClick={handleResend}
+                style={{ color: 'var(--color-coral)', cursor: resending ? 'default' : 'pointer', fontWeight: 600 }}>
+                {resending ? 'Sending...' : 'Resend email'}
               </span>
             )}
           </div>
