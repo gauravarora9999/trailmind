@@ -217,41 +217,29 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     setVoiceFilters({});
   };
 
-  // Match score — all 5 dimensions
+  // Soft match score — higher = better match, never removes cities
   const getMatchScore = (city) => {
     let score = 0;
     const vibe = getVibe(city);
     const price = getStartPrice(city);
-    if (activeVibe && vibe.label === activeVibe) score += 2;
+    if (activeVibe && vibe.label === activeVibe) score += 3;
     if (activeBudget) {
       const bf = BUDGET_FILTERS.find(b => b.label === activeBudget);
-      if (bf && price <= bf.max) score += 2;
+      if (bf && price <= bf.max) score += 3;
     }
     if (activeDuration) {
       const dr = DURATION_RANGES[activeDuration];
-      if (dr && city.minDays <= dr.max && city.maxDays >= dr.min) score += 2;
+      if (dr && city.minDays <= dr.max && city.maxDays >= dr.min) score += 3;
     }
-    if (activeRegion !== 'All' && city.region === activeRegion) score += 1;
     return score;
   };
 
-  // Apply all 5 filters
+  // Region = only hard filter. Vibe / Budget / Duration = soft ranking only
   const baseFiltered = activeRegion === 'All' ? CITIES : CITIES.filter(c => c.region === activeRegion);
-  const vibeFiltered = activeVibe ? baseFiltered.filter(c => getVibe(c).label === activeVibe) : baseFiltered;
-  const budgetFiltered = activeBudget
-    ? vibeFiltered.filter(c => {
-        const bf = BUDGET_FILTERS.find(b => b.label === activeBudget);
-        return bf ? getStartPrice(c) <= bf.max : true;
-      })
-    : vibeFiltered;
-  const durationFiltered = activeDuration
-    ? budgetFiltered.filter(c => {
-        const dr = DURATION_RANGES[activeDuration];
-        return dr ? c.minDays <= dr.max && c.maxDays >= dr.min : true;
-      })
-    : budgetFiltered;
-  const filtered = [...durationFiltered].sort((a, b) => getMatchScore(b) - getMatchScore(a));
+  const filtered = [...baseFiltered].sort((a, b) => getMatchScore(b) - getMatchScore(a));
   const hasActiveFilters = activeRegion !== 'All' || activeVibe || activeBudget || activeDuration;
+  // Best match = scored at least one soft filter
+  const maxScore = filtered[0] ? getMatchScore(filtered[0]) : 0;
 
   return (
     <>
@@ -455,7 +443,8 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
           {/* Results count */}
           {hasActiveFilters && (
             <div className="sf-results-count">
-              Showing <b>{filtered.length}</b> of {CITIES.length} destinations
+              {activeRegion !== 'All' ? <><b>{filtered.length}</b> destinations in {activeRegion}</> : <><b>{filtered.length}</b> destinations</>}
+              {(activeVibe || activeBudget || activeDuration) && <> — sorted by best match</>}
             </div>
           )}
 
@@ -466,7 +455,7 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
               const price = getStartPrice(c);
               const rating = getAvgRating(c);
               const score = getMatchScore(c);
-              const isBestMatch = hasActiveFilters && score >= 3;
+              const isBestMatch = hasActiveFilters && maxScore > 0 && score === maxScore && score > 0;
               return (
                 <div
                   className={`dest-card${hovered === c.name ? ' hovered' : ''}${isBestMatch ? ' best-match' : ''}`}
