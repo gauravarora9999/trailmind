@@ -28,6 +28,15 @@ const CURATED = {
   'snow,ski,winter': 'https://images.unsplash.com/photo-1551524559-8af4e6624178?auto=format&fit=crop&w=640&h=800&q=80',
   'roadtrip,driving,scenic': 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=640&h=800&q=80',
   'wellness,yoga,spa': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=640&h=800&q=80',
+  // Experience Center scenes — verified, scene-accurate photography
+  'burj+khalifa,sky': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1080&h=720&q=80',
+  'dubai,desert,dunes': 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1080&h=720&q=80',
+  'london+eye,thames': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1080&h=720&q=80',
+  'tower+bridge,london': 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=1080&h=720&q=80',
+  'shibuya,skyline': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1080&h=720&q=80',
+  'mount+fuji,lake': 'https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=1080&h=720&q=80',
+  'eiffel+tower,paris': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1080&h=720&q=80',
+  'seine,paris,boat': 'https://images.unsplash.com/photo-1431274172761-fca41d930114?auto=format&fit=crop&w=1080&h=720&q=80',
 };
 
 // ── Image URL generator — curated Unsplash with picsum fallback ──
