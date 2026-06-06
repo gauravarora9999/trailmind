@@ -36,7 +36,7 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
           >
             Adventure AI
           </a>
-          {user && link('My Trips', showSavedTrips, '/saved-trips')}
+          {user && link('My Trips', showMyTrips, '/my-trips')}
           {link('About', showAbout, '/about')}
         </div>
 
@@ -71,7 +71,7 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
           >
             Adventure AI
           </a>
-          {user && link('My Trips', showSavedTrips, '/saved-trips')}
+          {user && link('My Trips', showMyTrips, '/my-trips')}
           {link('About', showAbout, '/about')}
           <div className="mobile-auth">
             {user ? (

@@ -344,7 +344,10 @@ export default function PlannerPage({
                   if (!user) { toast('Sign in to save trips'); return; }
                   setSaving(true);
                   try {
-                    const { error } = await supabase.from('saved_trips').insert({
+                    const timeout = new Promise((_, reject) =>
+                      setTimeout(() => reject(new Error('Save timed out — check your connection')), 10000)
+                    );
+                    const save = supabase.from('saved_trips').insert({
                       user_id: user.id,
                       source: 'planner',
                       city_name: plan.city.name,
@@ -368,9 +371,10 @@ export default function PlannerPage({
                       plan_days: plan.days,
                       selected_activities: plan.selected.map(a => ({ t: a.t, type: a.type, time: a.time }))
                     });
-                    if (error) throw error;
+                    const { error } = await Promise.race([save, timeout]);
+                    if (error) throw new Error(error.message);
                     setSaved(true);
-                    toast('Trip saved to your account');
+                    toast('Trip saved! View it in My Trips.');
                     setTimeout(() => setSaved(false), 5000);
                   } catch (err) {
                     toast('Save failed: ' + (err.message || 'Unknown error'));
