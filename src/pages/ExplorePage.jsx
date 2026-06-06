@@ -77,7 +77,7 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
       setTranscript(text);
       if (e.results[e.results.length - 1].isFinal) {
         recog.stop();
-        answerRef.current(text);
+        answerRef.current(text, true); // fromVoice = true
       }
     };
     recog.onend = () => setListening(false);
@@ -87,29 +87,30 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     recog.start();
   };
 
-  const answer = (text) => {
+  const answer = (text, fromVoice = false) => {
     const currentIdx = vIdxRef.current;
     if (currentIdx < 0 || currentIdx >= VQ.length) return;
 
-    // Show confirmed answer for 1.5s before advancing
-    setConfirmedAnswer(text);
     setTranscript('');
     setInputVal('');
     setListening(false);
     setVAns((prev) => ({ ...prev, [currentIdx]: text }));
+
+    // Only show confirmation card for voice input
+    const delay = fromVoice ? 1500 : 0;
+    if (fromVoice) setConfirmedAnswer(text);
 
     setTimeout(() => {
       setConfirmedAnswer('');
       const next = currentIdx + 1;
       if (next < VQ.length) {
         setVIdx(next);
-        // Speak next question, then auto-start listening
         speak(VQ[next].q, () => setTimeout(startListening, 400));
       } else {
         setVIdx(5);
         speak('Great! Here is your travel profile.');
       }
-    }, 1500);
+    }, delay);
   };
 
   useEffect(() => { answerRef.current = answer; });
