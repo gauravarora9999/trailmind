@@ -9,9 +9,6 @@ export default function ContactPage({ toast }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) { toast('Please enter your name'); return; }
-    if (!email.trim() || !email.includes('@')) { toast('Please enter a valid email'); return; }
-    if (!msg.trim()) { toast('Please enter a message'); return; }
     setSending(true);
     try {
       const { error } = await supabase.from('contact_messages').insert({

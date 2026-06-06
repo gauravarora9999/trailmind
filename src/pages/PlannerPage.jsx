@@ -13,6 +13,7 @@ export default function PlannerPage({
   const [generating, setGenerating] = useState(false);
   const [stage, setStage] = useState(0);
   const [plan, setPlan] = useState(null);
+  const [aiInsights, setAiInsights] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -26,41 +27,62 @@ export default function PlannerPage({
   const tier = plannerTier || 'Mid-range';
   const pax = plannerPax || 2;
 
-  const generate = () => {
+  const generate = async () => {
     const c = CITIES.find(x => x.name === plannerCity) || CITIES[0];
     setGenerating(true);
     setStage(0);
     setPlan(null);
-    let s = 0;
-    const iv = setInterval(() => {
-      s++;
-      setStage(s);
-      if (s >= PL_STAGES.length) {
-        clearInterval(iv);
-        const selected = plannerSelections && plannerSelections.length > 0
-          ? c.acts.filter(a => plannerSelections.includes(a.t))
-          : c.acts;
-        const calc = computeTrip(c, selected, tier);
-        const days = [];
-        for (let d = 0; d < calc.days; d++) {
-          const dayActs = selected.slice(d * 3, d * 3 + 3);
-          if (dayActs.length === 0) break;
-          const dayCost = dayActs.reduce((sum, a) => sum + actCost(a.type, tier, cityIdx(c.name)), 0);
-          days.push({
-            label: DAY_THEMES[Math.min(d, DAY_THEMES.length - 1)],
-            dayCost,
-            acts: dayActs.map((a, i) => ({
-              ...a,
-              displayTime: DAY_TIMES[i] || '18:00',
-              cost: actCost(a.type, tier, cityIdx(c.name))
-            }))
-          });
-        }
-        const score = Math.min(96, 78 + (tier === 'Mid-range' ? 9 : tier === 'Luxury' ? 6 : 5) + (selected.length >= 5 ? 3 : 0));
-        setPlan({ city: c, calc, days, selected, tier, score });
-        setGenerating(false);
+    setAiInsights(null);
+
+    // Build plan deterministically
+    const selected = plannerSelections && plannerSelections.length > 0
+      ? c.acts.filter(a => plannerSelections.includes(a.t))
+      : c.acts;
+    const calc = computeTrip(c, selected, tier);
+    const days = [];
+    for (let d = 0; d < calc.days; d++) {
+      const dayActs = selected.slice(d * 3, d * 3 + 3);
+      if (dayActs.length === 0) break;
+      const dayCost = dayActs.reduce((sum, a) => sum + actCost(a.type, tier, cityIdx(c.name)), 0);
+      days.push({
+        label: DAY_THEMES[Math.min(d, DAY_THEMES.length - 1)],
+        dayCost,
+        acts: dayActs.map((a, i) => ({
+          ...a,
+          displayTime: DAY_TIMES[i] || '18:00',
+          cost: actCost(a.type, tier, cityIdx(c.name))
+        }))
+      });
+    }
+    const score = Math.min(96, 78 + (tier === 'Mid-range' ? 9 : tier === 'Luxury' ? 6 : 5) + (selected.length >= 5 ? 3 : 0));
+
+    // Call Claude API for personalized insights
+    let stageIdx = 0;
+    const stageIv = setInterval(() => { stageIdx++; setStage(stageIdx); }, 800);
+
+    try {
+      const res = await fetch('/.netlify/functions/generate-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: c.name,
+          country: c.country,
+          activities: selected.map(a => ({ t: a.t, type: a.type, time: a.time, d: a.d })),
+          tier,
+          pax
+        })
+      });
+      if (res.ok) {
+        const insights = await res.json();
+        setAiInsights(insights);
       }
-    }, 600);
+    } catch (err) {
+      console.log('AI insights unavailable:', err.message);
+    }
+
+    clearInterval(stageIv);
+    setPlan({ city: c, calc, days, selected, tier, score });
+    setGenerating(false);
   };
 
   const exportPDF = async () => {
@@ -69,11 +91,10 @@ export default function PlannerPage({
     try {
       const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF();
-      const m = 20; // margin
+      const m = 20;
       let y = m;
-      const pw = 170; // page width minus margins
+      const pw = 170;
 
-      // Header
       doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
       doc.text('Trailmind Trip Plan', m, y);
@@ -83,7 +104,6 @@ export default function PlannerPage({
       doc.line(m, y, m + pw, y);
       y += 12;
 
-      // Trip summary
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.text(`${plan.calc.days}-Day ${plan.city.name} Adventure`, m, y);
@@ -93,7 +113,6 @@ export default function PlannerPage({
       doc.text(`${plan.city.country}  |  ${plan.tier}  |  ${pax} traveller${pax > 1 ? 's' : ''}  |  Match: ${plan.score}%`, m, y);
       y += 14;
 
-      // Day-by-day
       plan.days.forEach((d, di) => {
         if (y > 250) { doc.addPage(); y = m; }
         doc.setFontSize(13);
@@ -113,7 +132,6 @@ export default function PlannerPage({
         y += 5;
       });
 
-      // Cost breakdown
       if (y > 230) { doc.addPage(); y = m; }
       y += 4;
       doc.setFontSize(13);
@@ -148,7 +166,6 @@ export default function PlannerPage({
         y += 10;
       }
 
-      // Accommodation
       if (y > 240) { doc.addPage(); y = m; }
       y += 4;
       doc.setFontSize(13);
@@ -172,7 +189,6 @@ export default function PlannerPage({
         y += 7;
       });
 
-      // Footer
       y += 8;
       doc.setFontSize(9);
       doc.setTextColor(150, 150, 150);
@@ -205,7 +221,7 @@ export default function PlannerPage({
     <>
       <section className="pl-hero">
         <div className="wrap">
-          <span className="badge">&#10022; AI TRIP PLANNER</span>
+          <span className="badge">&#10022; TRIP PLANNER</span>
           <h2>Tell us the place and the budget. We'll cost the whole trip.</h2>
           <p>Pick a destination and a budget style &#8212; Trailmind builds the days, prices every activity, and suggests where to stay.</p>
         </div>
@@ -253,6 +269,13 @@ export default function PlannerPage({
               {renderDial(plan.score)}
             </div>
 
+            {aiInsights?.summary && (
+              <div style={{ padding: '20px 24px', background: 'var(--color-stats)', borderRadius: 'var(--radius-card)', marginBottom: 24, fontSize: 15, lineHeight: 1.6, color: 'var(--color-ink)' }}>
+                <div style={{ fontWeight: 800, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-coral)', marginBottom: 8 }}>AI Summary</div>
+                {aiInsights.summary}
+              </div>
+            )}
+
             <div className="pl-cols">
               <div>
                 <h4 style={{ fontSize: 18, fontWeight: 900, letterSpacing: '-.5px', marginBottom: 14 }}>Your day-by-day plan</h4>
@@ -270,6 +293,9 @@ export default function PlannerPage({
                           <div>
                             <div className="an">{a.t}</div>
                             <div className="am">{a.type} &#183; {a.time}</div>
+                            {aiInsights?.tips?.[a.t] && (
+                              <div style={{ fontSize: 13, color: 'var(--color-forest)', marginTop: 4, fontStyle: 'italic' }}>{aiInsights.tips[a.t]}</div>
+                            )}
                           </div>
                           <div className="acost">{a.cost === 0 ? 'Free' : '~' + money(a.cost)}</div>
                         </div>
@@ -353,6 +379,27 @@ export default function PlannerPage({
                   }
                 }}>{saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save this trip'}</button>
                 <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-line)', marginTop: 10, opacity: exporting ? 0.6 : 1 }} disabled={exporting} onClick={exportPDF}>{exporting ? 'Generating PDF...' : 'Export as PDF'}</button>
+
+                {aiInsights?.dining && aiInsights.dining.length > 0 && (
+                  <div className="pcard" style={{ marginTop: 16 }}>
+                    <h4>Where to eat</h4>
+                    {aiInsights.dining.map((d, i) => (
+                      <div key={i} style={{ padding: '10px 0', borderBottom: i < aiInsights.dining.length - 1 ? '1px solid var(--color-line)' : 'none' }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{d.name}</div>
+                        <div style={{ fontSize: 13, color: 'var(--color-gray)', marginTop: 2 }}>{d.desc}</div>
+                        {d.price && <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-forest)', marginTop: 4 }}>{d.price}</div>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {aiInsights?.hiddenGem && (
+                  <div className="pcard" style={{ marginTop: 16, border: '1.5px solid var(--color-coral)', background: 'rgba(255,91,58,0.03)' }}>
+                    <h4 style={{ color: 'var(--color-coral)' }}>Hidden gem</h4>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>{aiInsights.hiddenGem.name}</div>
+                    <div style={{ fontSize: 13, color: 'var(--color-gray)', marginTop: 4 }}>{aiInsights.hiddenGem.desc}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

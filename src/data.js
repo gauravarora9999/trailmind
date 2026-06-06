@@ -4,8 +4,39 @@ export const PALETTE = ['#1B4D31','#0F4C81','#B45309','#7C2D12','#155E75','#6D28
 // ── Hash function for seeding ──
 export function hash(s) { let h=0; for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;} return h; }
 
-// ── Image URL generator with loremflickr ──
-export function img(q) { return `https://loremflickr.com/640/800/${encodeURIComponent(q)}?lock=${Math.abs(hash(q))}`; }
+// ── Curated image map ──
+const CURATED = {
+  // Cities
+  'dubai,skyline': 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=640&h=800&q=80',
+  'tokyo,shibuya': 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=640&h=800&q=80',
+  'london,bigben': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=640&h=800&q=80',
+  'paris,eiffel': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=640&h=800&q=80',
+  'newyork,manhattan': 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=640&h=800&q=80',
+  'bali,temple': 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=640&h=800&q=80',
+  'rome,colosseum': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=640&h=800&q=80',
+  'singapore,marina': 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=640&h=800&q=80',
+  'bangkok,temple': 'https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=640&h=800&q=80',
+  'barcelona,sagrada': 'https://images.unsplash.com/photo-1583422409516-2895a77efded?auto=format&fit=crop&w=640&h=800&q=80',
+  'istanbul,mosque': 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=640&h=800&q=80',
+  'capetown,mountain': 'https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&w=640&h=800&q=80',
+  // Adventure styles
+  'mountain,trek,hiking': 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=640&h=800&q=80',
+  'beach,island,tropical': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=640&h=800&q=80',
+  'city,culture,museum': 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=640&h=800&q=80',
+  'desert,safari,wildlife': 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=640&h=800&q=80',
+  'food,wine,market': 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=640&h=800&q=80',
+  'snow,ski,winter': 'https://images.unsplash.com/photo-1551524559-8af4e6624178?auto=format&fit=crop&w=640&h=800&q=80',
+  'roadtrip,driving,scenic': 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=640&h=800&q=80',
+  'wellness,yoga,spa': 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=640&h=800&q=80',
+};
+
+// ── Image URL generator — curated Unsplash with picsum fallback ──
+export function img(q) {
+  if (CURATED[q]) return CURATED[q];
+  // Deterministic fallback using picsum with seeded hash
+  const seed = Math.abs(hash(q));
+  return `https://picsum.photos/seed/${seed}/640/800`;
+}
 
 // ── Placeholder gradient background ──
 export function placeholderBg(seed) {
@@ -17,9 +48,7 @@ export function placeholderBg(seed) {
 // ── Money formatter ──
 export function money(n) { return '$' + n.toLocaleString('en-US'); }
 
-// ═══════════════════════════════════════
 // CITIES — 12 cities, 5 activities each
-// ═══════════════════════════════════════
 export const CITIES = [
   {name:'Dubai',country:'United Arab Emirates',region:'Middle East',q:'dubai,skyline',acts:[
     {t:'Burj Khalifa — At the Top',d:'Ride to the 148th floor of the world\'s tallest building for 360° desert-and-sea views.',type:'Landmark',time:'2 hrs',rating:'4.7'},
@@ -107,9 +136,7 @@ export const CITIES = [
   ]},
 ];
 
-// ═══════════════════════════════════════
 // ADVENTURE STYLES
-// ═══════════════════════════════════════
 export const STYLES = [
   {t:'Mountain & Trek',ic:'⛰️',d:'High-altitude trails and summit chases',q:'mountain,trek,hiking'},
   {t:'Beach & Island',ic:'🏖️',d:'Tropical shores, reef snorkelling, hammock time',q:'beach,island,tropical'},
@@ -121,9 +148,7 @@ export const STYLES = [
   {t:'Wellness & Retreat',ic:'🧘',d:'Yoga, hot springs, digital detox',q:'wellness,yoga,spa'},
 ];
 
-// ═══════════════════════════════════════
 // VOICE QUESTIONS
-// ═══════════════════════════════════════
 export const VQ = [
   {q:'What kind of trip are you dreaming of?', chips:['Beach getaway','Mountain trek','City adventure','Safari & wildlife','Food & culture']},
   {q:'How long do you want to travel?', chips:['Weekend (2-3 days)','One week','Two weeks','Open-ended']},
@@ -132,9 +157,7 @@ export const VQ = [
   {q:'Any must-haves?', chips:['Great food scene','Adventure sports','Historical sites','Nightlife','Nature & wildlife']},
 ];
 
-// ═══════════════════════════════════════
 // COST ENGINE
-// ═══════════════════════════════════════
 export const ACT_COST = {Landmark:35,Adventure:75,Adrenaline:120,Culture:25,Food:45,Free:0,Art:30,Nature:40,Relax:35,Nightlife:60};
 
 export const CITY_INDEX = {
@@ -144,14 +167,14 @@ export const CITY_INDEX = {
 };
 
 export const TIERS = {
-  Budget:     {mult:0.85, stayBase:48,  foodDay:25,  transDay:12, stays:[['Hostel — private room','Central, shared lounge'],['3★ guesthouse','Breakfast included'],['Budget chain hotel','Reliable & clean']]},
-  'Mid-range':{mult:1.0,  stayBase:135, foodDay:55,  transDay:22, stays:[['4★ central hotel','Walk to the sights'],['Boutique stay','Design-led, great reviews'],['Serviced apartment','Kitchen + space']]},
-  Luxury:     {mult:1.35, stayBase:340, foodDay:120, transDay:55, stays:[['5★ landmark hotel','Iconic views & spa'],['Luxury resort','Pool, butler service'],['Private suite','Top-floor, club access']]},
+  Budget:     {mult:0.85, stayBase:48,  foodDay:25,  transDay:12, stays:[['Hostel — private room','Central, shared lounge'],['★ guesthouse','Breakfast included'],['Budget chain hotel','Reliable & clean']]},
+  'Mid-range':{mult:1.0,  stayBase:135, foodDay:55,  transDay:22, stays:[['★★★★ central hotel','Walk to the sights'],['Boutique stay','Design-led, great reviews'],['Serviced apartment','Kitchen + space']]},
+  Luxury:     {mult:1.35, stayBase:340, foodDay:120, transDay:55, stays:[['★★★★★ landmark hotel','Iconic views & spa'],['Luxury resort','Pool, butler service'],['Private suite','Top-floor, club access']]},
 };
 
 export const TIER_NAMES = ['Budget','Mid-range','Luxury'];
 
-// ── Cost utility functions ──
+// Cost utility functions
 export function cityIdx(name) { return CITY_INDEX[name] || 1.0; }
 
 export function actCost(type, tier, cidx) {
@@ -174,9 +197,7 @@ export function computeTrip(city, actList, tier) {
   return { days, nights, activities, stay, food, transport, buffer, total, cidx, stays: t.stays };
 }
 
-// ═══════════════════════════════════════
 // REGION MAP — voice routing
-// ═══════════════════════════════════════
 export const REGION_MAP = [
   ['beach','Asia'],['island','Asia'],['trek','Asia'],['mountain','Asia'],
   ['desert','Middle East'],['safari','Africa'],['wildlife','Africa'],
@@ -198,9 +219,7 @@ export function mapBudgetTier(text) {
   return 'Mid-range';
 }
 
-// ═══════════════════════════════════════
 // EXPERIENCE CENTER SCENES
-// ═══════════════════════════════════════
 export const XC = {
   Dubai: [
     {t:'Climb the Burj Khalifa',s:'on the spire of the world\'s tallest tower',q:'burj+khalifa,sky'},
@@ -220,9 +239,7 @@ export const XC = {
   ],
 };
 
-// ═══════════════════════════════════════
 // PLANNER GENERATION STAGES
-// ═══════════════════════════════════════
 export const PL_STAGES = [
   'Reading your preferences…',
   'Picking the best activities…',
@@ -239,8 +256,6 @@ export const GEN_STAGES = [
   'Finishing your preview…',
 ];
 
-// ═══════════════════════════════════════
 // DAY THEMES AND TIMES
-// ═══════════════════════════════════════
 export const DAY_THEMES = ['Arrival & highlights','Adventure day','Culture & food','Explore & relax','Final day'];
 export const DAY_TIMES = ['09:00','12:30','16:00'];

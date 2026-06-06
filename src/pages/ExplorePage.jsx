@@ -3,7 +3,7 @@ import { CITIES, STYLES, VQ, img, placeholderBg, pickRegionFrom, mapBudgetTier }
 
 const REGIONS = ['All', 'Asia', 'Europe', 'Middle East', 'Africa', 'Americas'];
 
-export default function ExplorePage({ openCity, showPlanner, showVoicePage, toast }) {
+export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeRegion, setActiveRegion] = useState('All');
 
   // ── Voice card state ──
@@ -108,9 +108,9 @@ export default function ExplorePage({ openCity, showPlanner, showVoicePage, toas
               <button className="btn btn-ghost" style={{border:'1px solid var(--color-line)'}} onClick={() => window.scrollTo({top: document.querySelector('.explore-head')?.offsetTop || 0, behavior: 'smooth'})}>Explore destinations →</button>
             </div>
             <div className="pill-stat">
-              <div><b>2 min</b>avg plan time</div>
-              <div><b>87%</b>avg match score</div>
-              <div><b>120+</b>destinations</div>
+              <div><b>12</b>handpicked cities</div>
+              <div><b>60</b>curated activities</div>
+              <div><b>3</b>budget tiers</div>
             </div>
           </div>
 
@@ -263,7 +263,6 @@ export default function ExplorePage({ openCity, showPlanner, showVoicePage, toas
             { ic: '🎙', t: 'Plan by talking', d: 'Speak five answers and get a complete trip. No forms, no twenty open tabs.', vs: 'vs. manual list-building' },
             { ic: '💸', t: 'Real, itemised cost', d: 'Activities, stay, food, transport and buffer — priced per person before you book.', vs: 'vs. "price on request"' },
             { ic: '🎚', t: 'Budget or luxury', d: 'One tap reshapes the whole trip and its hotels to your spend level.', vs: 'vs. one-size-fits-all' },
-            { ic: '🧗', t: 'See yourself there', d: 'Drop your face into the activity and preview it before you commit.', vs: 'nobody else has this' },
           ].map((w) => (
             <div className="why-card" key={w.t}>
               <div className="ic">{w.ic}</div>

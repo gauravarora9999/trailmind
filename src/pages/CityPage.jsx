@@ -167,7 +167,7 @@ export default function CityPage({
                     style={{ width: '100%', justifyContent: 'center', marginTop: '20px' }}
                     onClick={() => onPlanTrip(city.name, trip, tripTier)}
                   >
-                    Open full AI plan
+                    Build my itinerary
                   </button>
                 </>
               )}
