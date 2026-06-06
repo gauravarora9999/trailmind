@@ -399,57 +399,35 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             </div>
           )}
 
-          {/* Filter Panel — region + vibe + budget in one clean box */}
+          {/* Filter Panel — one row per filter type */}
           <div className="smart-filter-panel">
-            {/* Region */}
-            <div className="sf-group">
+            <div className="sf-row">
               <span className="sf-group-label">Region</span>
               {REGIONS.map((r) => (
-                <button
-                  key={r.label}
-                  className={`sf-chip${activeRegion === r.label ? ' active' : ''}`}
-                  onClick={() => setActiveRegion(r.label)}
-                >
+                <button key={r.label} className={`sf-chip${activeRegion === r.label ? ' active' : ''}`} onClick={() => setActiveRegion(r.label)}>
                   {r.emoji} {r.label}
                 </button>
               ))}
             </div>
-
-            <div className="sf-divider" />
-
-            {/* Vibe */}
-            <div className="sf-group">
+            <div className="sf-row">
               <span className="sf-group-label">Vibe</span>
               {VIBE_FILTERS.map(v => (
-                <button
-                  key={v.label}
-                  className={`sf-chip${activeVibe === v.label ? ' active' : ''}`}
-                  onClick={() => setActiveVibe(activeVibe === v.label ? null : v.label)}
-                >
+                <button key={v.label} className={`sf-chip${activeVibe === v.label ? ' active' : ''}`} onClick={() => setActiveVibe(activeVibe === v.label ? null : v.label)}>
                   {v.emoji} {v.label}
                 </button>
               ))}
             </div>
-
-            <div className="sf-divider" />
-
-            {/* Budget */}
-            <div className="sf-group">
+            <div className="sf-row">
               <span className="sf-group-label">Budget</span>
               {BUDGET_FILTERS.map(b => (
-                <button
-                  key={b.label}
-                  className={`sf-chip${activeBudget === b.label ? ' active' : ''}`}
-                  onClick={() => setActiveBudget(activeBudget === b.label ? null : b.label)}
-                >
+                <button key={b.label} className={`sf-chip${activeBudget === b.label ? ' active' : ''}`} onClick={() => setActiveBudget(activeBudget === b.label ? null : b.label)}>
                   {b.emoji} {b.label}
                 </button>
               ))}
+              {hasActiveFilters && (
+                <button className="sf-clear-btn" onClick={clearAllFilters}>✕ Clear all</button>
+              )}
             </div>
-
-            {hasActiveFilters && (
-              <button className="sf-clear-btn" onClick={clearAllFilters}>✕ Clear</button>
-            )}
           </div>
 
           {/* Results count */}
