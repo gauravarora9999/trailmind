@@ -151,8 +151,12 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     const region = pickRegionFrom(trip);
     if (region) setActiveRegion(region);
     const tier = mapBudgetTier(vAns[2] || '');
-    toast(`Profile set — ${tier} tier, showing ${region || 'all'} destinations`);
+    toast(`Showing ${region || 'all'} destinations — ${tier} tier`);
     setVIdx(-1); setVAns({});
+    // Scroll to destination cards after a short delay so filter applies first
+    setTimeout(() => {
+      document.querySelector('.explore-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
   };
 
   const filtered = activeRegion === 'All' ? CITIES : CITIES.filter(c => c.region === activeRegion);
