@@ -30,12 +30,6 @@ const DURATION_FILTERS = [
   { label: 'Extended', emoji: '✈️', desc: '14+ days' },
 ];
 
-const GROUP_FILTERS = [
-  { label: 'Solo', emoji: '🧍' },
-  { label: 'Couple', emoji: '💑' },
-  { label: 'Family', emoji: '👨‍👩‍👧' },
-  { label: 'Friends', emoji: '👯' },
-];
 
 // Parse ALL 5 voice answers into filter values
 const parseVoiceFilters = (vAns) => {
@@ -88,7 +82,6 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeVibe, setActiveVibe] = useState(null);
   const [activeBudget, setActiveBudget] = useState(null);
   const [activeDuration, setActiveDuration] = useState(null);
-  const [activeGroup, setActiveGroup] = useState(null);
   const [voiceFilters, setVoiceFilters] = useState({});
   const [hovered, setHovered] = useState(null);
 
@@ -210,7 +203,6 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     if (parsed.vibe) setActiveVibe(parsed.vibe);
     if (parsed.budget) setActiveBudget(parsed.budget);
     if (parsed.duration) setActiveDuration(parsed.duration);
-    if (parsed.group) setActiveGroup(parsed.group);
     setVIdx(-1); setVAns({});
     setTimeout(() => {
       document.querySelector('.explore-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -222,7 +214,6 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     setActiveVibe(null);
     setActiveBudget(null);
     setActiveDuration(null);
-    setActiveGroup(null);
     setVoiceFilters({});
   };
 
@@ -240,7 +231,6 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
       const dr = DURATION_RANGES[activeDuration];
       if (dr && city.minDays <= dr.max && city.maxDays >= dr.min) score += 2;
     }
-    if (activeGroup && city.groupTags?.includes(activeGroup)) score += 2;
     if (activeRegion !== 'All' && city.region === activeRegion) score += 1;
     return score;
   };
@@ -260,11 +250,8 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
         return dr ? c.minDays <= dr.max && c.maxDays >= dr.min : true;
       })
     : budgetFiltered;
-  const groupFiltered = activeGroup
-    ? durationFiltered.filter(c => c.groupTags?.includes(activeGroup))
-    : durationFiltered;
-  const filtered = [...groupFiltered].sort((a, b) => getMatchScore(b) - getMatchScore(a));
-  const hasActiveFilters = activeRegion !== 'All' || activeVibe || activeBudget || activeDuration || activeGroup;
+  const filtered = [...durationFiltered].sort((a, b) => getMatchScore(b) - getMatchScore(a));
+  const hasActiveFilters = activeRegion !== 'All' || activeVibe || activeBudget || activeDuration;
 
   return (
     <>
@@ -421,7 +408,6 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
               <span className="vf-label">🎙 Matched from your answers:</span>
               {voiceFilters.duration && <span className="vf-chip">{DURATION_FILTERS.find(d => d.label === voiceFilters.duration)?.emoji} {voiceFilters.duration}</span>}
               {voiceFilters.budget && <span className="vf-chip">{BUDGET_FILTERS.find(b => b.label === voiceFilters.budget)?.emoji} {voiceFilters.budget}</span>}
-              {voiceFilters.group && <span className="vf-chip">{GROUP_FILTERS.find(g => g.label === voiceFilters.group)?.emoji} {voiceFilters.group}</span>}
               {voiceFilters.vibe && <span className="vf-chip">{VIBE_FILTERS.find(v => v.label === voiceFilters.vibe)?.emoji} {voiceFilters.vibe}</span>}
               <button className="vf-clear" onClick={clearAllFilters}>✕ Clear</button>
             </div>
@@ -458,14 +444,6 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
               {DURATION_FILTERS.map(d => (
                 <button key={d.label} className={`sf-chip${activeDuration === d.label ? ' active' : ''}`} onClick={() => setActiveDuration(activeDuration === d.label ? null : d.label)}>
                   {d.emoji} {d.label} <span className="sf-chip-desc">{d.desc}</span>
-                </button>
-              ))}
-            </div>
-            <div className="sf-row">
-              <span className="sf-group-label">Group</span>
-              {GROUP_FILTERS.map(g => (
-                <button key={g.label} className={`sf-chip${activeGroup === g.label ? ' active' : ''}`} onClick={() => setActiveGroup(activeGroup === g.label ? null : g.label)}>
-                  {g.emoji} {g.label}
                 </button>
               ))}
               {hasActiveFilters && (
