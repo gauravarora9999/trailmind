@@ -234,12 +234,11 @@ nav.site-nav {
 /* ═══════════════════════════════════════
    ADVENTURE STYLES
    ═══════════════════════════════════════ */
-.styles { padding: 80px 0; background: var(--color-white); }
+.styles { padding: 80px 0; background: var(--color-section); }
 .styles-in { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
-.style-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 20px; margin-top: 40px;
-}
+.styles-in h2 { font-size: 32px; font-weight: 900; letter-spacing: -1px; color: var(--color-ink); margin-bottom: 8px; }
+.styles-in .lead { font-size: 15px; color: var(--color-gray); }
+.style-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 36px; }
 .style-card {
   position: relative; border-radius: var(--radius-card-lg);
   overflow: hidden; cursor: pointer;
