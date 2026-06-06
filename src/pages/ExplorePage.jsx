@@ -37,56 +37,109 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeRegion, setActiveRegion] = useState('All');
   const [hovered, setHovered] = useState(null);
 
+  // ── Voice card animated height ──
+  const [cardHeight, setCardHeight] = useState(null);
+  const innerRef = useRef(null);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    if (!innerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const h = entry.contentRect.height;
+        setCardHeight(h + 56); // 28px padding top + bottom
+      }
+    });
+    observer.observe(innerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   // ── Voice card state ──
   const [vIdx, setVIdx] = useState(-1);
   const [vAns, setVAns] = useState({});
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [confirmedAnswer, setConfirmedAnswer] = useState(''); // shows captured answer before advancing
   const [inputVal, setInputVal] = useState('');
-  const recognRef = useRef(null);
   const synthRef = useRef(null);
+  const vIdxRef = useRef(-1);
+  const answerRef = useRef(null);
 
   useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SR) {
-      const recog = new SR();
-      recog.lang = 'en-US';
-      recog.interimResults = true;
-      recog.onresult = (e) => {
-        const text = Array.from(e.results).map(r => r[0].transcript).join('');
-        setTranscript(text);
-        if (e.results[e.results.length - 1].isFinal) answer(text);
-      };
-      recog.onend = () => setListening(false);
-      recognRef.current = recog;
-    }
     synthRef.current = window.speechSynthesis || null;
   }, []);
 
-  const speak = (text) => {
+  useEffect(() => { vIdxRef.current = vIdx; }, [vIdx]);
+
+  const speak = (text, onEnd) => {
     if (synthRef.current) {
+      synthRef.current.cancel();
       const utt = new SpeechSynthesisUtterance(text);
-      utt.rate = 1.05;
+      utt.rate = 1.0;
+      if (onEnd) utt.onend = onEnd;
       synthRef.current.speak(utt);
+    } else if (onEnd) {
+      onEnd();
     }
   };
+
+  const startListening = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const recog = new SR();
+    recog.lang = 'en-US';
+    recog.interimResults = true;
+    recog.onresult = (e) => {
+      const text = Array.from(e.results).map(r => r[0].transcript).join('');
+      setTranscript(text);
+      if (e.results[e.results.length - 1].isFinal) {
+        recog.stop();
+        answerRef.current(text, true); // fromVoice = true
+      }
+    };
+    recog.onend = () => setListening(false);
+    recog.onerror = () => setListening(false);
+    setListening(true);
+    setTranscript('');
+    recog.start();
+  };
+
+  const answer = (text, fromVoice = false) => {
+    const currentIdx = vIdxRef.current;
+    if (currentIdx < 0 || currentIdx >= VQ.length) return;
+
+    setTranscript('');
+    setInputVal('');
+    setListening(false);
+    setVAns((prev) => ({ ...prev, [currentIdx]: text }));
+
+    // Show confirmation for all input types, 1.5s for voice, 800ms for manual
+    const delay = fromVoice ? 1500 : 800;
+    setConfirmedAnswer(text);
+
+    setTimeout(() => {
+      setConfirmedAnswer('');
+      const next = currentIdx + 1;
+      if (next < VQ.length) {
+        setVIdx(next);
+        speak(VQ[next].q, () => setTimeout(startListening, 400));
+      } else {
+        setVIdx(5);
+        speak('Great! Here is your travel profile.');
+      }
+    }, delay);
+  };
+
+  useEffect(() => { answerRef.current = answer; });
 
   const orbTap = () => {
-    if (vIdx === -1) { setVIdx(0); speak(VQ[0].q); return; }
-    if (recognRef.current && !listening) {
-      setListening(true); setTranscript('');
-      try { recognRef.current.start(); } catch (_) {}
+    if (vIdxRef.current === -1) {
+      setVIdx(0);
+      // Speak first question then auto-start listening
+      speak(VQ[0].q, () => setTimeout(startListening, 400));
+      return;
     }
-  };
-
-  const answer = (text) => {
-    if (vIdx < 0 || vIdx >= VQ.length) return;
-    setVAns((prev) => ({ ...prev, [vIdx]: text }));
-    setTranscript(''); setInputVal(''); setListening(false);
-    if (recognRef.current) try { recognRef.current.stop(); } catch (_) {}
-    const next = vIdx + 1;
-    if (next < VQ.length) { setVIdx(next); speak(VQ[next].q); }
-    else { setVIdx(5); speak('Great! Here is your travel profile.'); }
+    if (!listening && confirmedAnswer === '') startListening();
   };
 
   const handleInputKey = (e) => {
@@ -123,37 +176,96 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             </div>
           </div>
 
-          {/* Voice Card */}
-          <div className="voice-card">
+          <div className="voice-card" ref={cardRef} style={{ height: cardHeight ? `${cardHeight}px` : 'auto' }}>
+          <div className="vc-inner" ref={innerRef}>
             <div className="vc-top">
               <span className="ttl">✦ Trailmind Voice</span>
               {listening && <span className="live">LISTENING</span>}
+              {confirmedAnswer && <span className="vc-confirmed-badge">✓ Captured</span>}
             </div>
+
             <div className="orb-wrap">
-              <div className={`orb${listening ? ' listening' : ''}`} onClick={orbTap}><div className="ring" /></div>
+              <div className={`orb${listening ? ' listening' : ''}${confirmedAnswer ? ' confirmed' : ''}`} onClick={orbTap}>
+                <div className="ring" />
+              </div>
             </div>
+
+            {/* Orb hint label */}
+            {vIdx === -1 && <div className="vc-orb-hint">Tap to start</div>}
+            {vIdx >= 0 && vIdx < VQ.length && !listening && !confirmedAnswer && (
+              <div className="vc-orb-hint">Tap to speak</div>
+            )}
+            {listening && <div className="vc-orb-hint listening-hint">🎙 Listening… speak now</div>}
+            {confirmedAnswer && <div className="vc-orb-hint">Moving to next question…</div>}
+
             <div className={`waves${listening ? ' on' : ''}`}>
               <span /><span /><span /><span /><span />
             </div>
-            {vIdx === -1 && (<><div className="vc-status">Tap the orb to start</div><div className="vc-q">Tell me about your dream trip</div></>)}
+
+            {/* Idle state */}
+            {vIdx === -1 && (
+              <div className="vc-q">Tell me about your dream trip</div>
+            )}
+
+            {/* Question flow */}
             {vIdx >= 0 && vIdx < VQ.length && (
               <>
-                <div className="vc-status">{listening ? 'Listening...' : 'Tap orb or pick below'}</div>
+                {/* Progress dots */}
+                <div className="vc-dots">
+                  {VQ.map((_, i) => (<i key={i} className={i < vIdx ? 'done' : i === vIdx ? 'active' : ''} />))}
+                </div>
+
                 <div className="vc-q">{VQ[vIdx].q}</div>
-                {transcript && <div className="vc-transcript">{transcript}</div>}
-                <div className="vc-chips">{VQ[vIdx].chips.map((c) => (<button key={c} className="vc-chip" onClick={() => answer(c)}>{c}</button>))}</div>
-                <div className="vc-dots">{VQ.map((_, i) => (<i key={i} className={i <= vIdx ? 'active' : ''} />))}</div>
-                <input className="vc-input" placeholder="Or type your answer..." value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={handleInputKey} />
+
+                {/* Live transcript while speaking */}
+                {transcript && !confirmedAnswer && (
+                  <div className="vc-transcript">"{transcript}"</div>
+                )}
+
+                {/* Confirmed answer display */}
+                {confirmedAnswer && (
+                  <div className="vc-captured">
+                    <span className="vc-captured-label">✓ Captured</span>
+                    <span className="vc-captured-text">"{confirmedAnswer}"</span>
+                  </div>
+                )}
+
+                {/* Quick-pick chips */}
+                {!confirmedAnswer && (
+                  <>
+                    <div className="vc-chips">
+                      {VQ[vIdx].chips.map((c) => (
+                        <button key={c} className="vc-chip" onClick={() => answer(c)}>{c}</button>
+                      ))}
+                    </div>
+                    <input
+                      className="vc-input"
+                      placeholder="Or type and press Enter…"
+                      value={inputVal}
+                      onChange={(e) => setInputVal(e.target.value)}
+                      onKeyDown={handleInputKey}
+                    />
+                  </>
+                )}
               </>
             )}
+
+            {/* Summary */}
             {vIdx === 5 && (
               <div className="vc-summary">
                 <strong style={{ display: 'block', marginBottom: '8px' }}>Your travel profile</strong>
-                {Object.entries(vAns).map(([k, v]) => (<div key={k} style={{ marginBottom: '4px' }}><span style={{ opacity: 0.5 }}>{VQ[k]?.q.replace('?', '')}: </span>{v}</div>))}
-                <button className="btn btn-coral" style={{ marginTop: '16px', width: '100%', justifyContent: 'center' }} onClick={finishVoice}>See matches</button>
+                {Object.entries(vAns).map(([k, v]) => (
+                  <div key={k} style={{ marginBottom: '4px' }}>
+                    <span style={{ opacity: 0.5 }}>{VQ[k]?.q.replace('?', '')}: </span>{v}
+                  </div>
+                ))}
+                <button className="btn btn-coral" style={{ marginTop: '16px', width: '100%', justifyContent: 'center' }} onClick={finishVoice}>
+                  See matches →
+                </button>
               </div>
             )}
-          </div>
+          </div>{/* end vc-inner */}
+          </div>{/* end voice-card */}
         </div>
       </section>
 
