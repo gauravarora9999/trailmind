@@ -10,6 +10,43 @@ const REGIONS = [
   { label: 'Americas', emoji: '🌎' },
 ];
 
+const VIBE_FILTERS = [
+  { label: 'Adventure', emoji: '🏄' },
+  { label: 'Culture', emoji: '🏛' },
+  { label: 'Food & Drink', emoji: '🍜' },
+  { label: 'City Break', emoji: '🌆' },
+];
+
+const BUDGET_FILTERS = [
+  { label: 'Budget', emoji: '💚', max: 650 },
+  { label: 'Mid-range', emoji: '💛', max: 850 },
+  { label: 'Luxury', emoji: '❤️', max: 9999 },
+];
+
+// Parse voice answers into smart filters
+const parseVoiceFilters = (vAns) => {
+  const filters = {};
+  // vAns[0] = trip type/destination → region
+  // vAns[2] = budget → budget tier
+  const budget = (vAns[2] || '').toLowerCase();
+  if (budget.includes('budget') || budget.includes('cheap')) filters.budget = 'Budget';
+  else if (budget.includes('luxury') || budget.includes('premium')) filters.budget = 'Luxury';
+  else if (budget.includes('mid') || budget.includes('comfort')) filters.budget = 'Mid-range';
+  // vAns[3] = who's coming → companion
+  const who = (vAns[3] || '').toLowerCase();
+  if (who.includes('solo') || who.includes('alone')) filters.companion = 'Solo';
+  else if (who.includes('family') || who.includes('kids') || who.includes('children')) filters.companion = 'Family';
+  else if (who.includes('couple') || who.includes('partner') || who.includes('romantic')) filters.companion = 'Couple';
+  else if (who.includes('friends') || who.includes('group')) filters.companion = 'Group';
+  // vAns[4] = must-haves → vibe
+  const must = (vAns[4] || '').toLowerCase();
+  if (must.includes('adventure') || must.includes('trek') || must.includes('hike') || must.includes('sport')) filters.vibe = 'Adventure';
+  else if (must.includes('culture') || must.includes('history') || must.includes('art') || must.includes('museum')) filters.vibe = 'Culture';
+  else if (must.includes('food') || must.includes('eat') || must.includes('cuisine')) filters.vibe = 'Food & Drink';
+  else if (must.includes('city') || must.includes('shopping') || must.includes('nightlife')) filters.vibe = 'City Break';
+  return filters;
+};
+
 // Derive vibe from activity types
 const getVibe = (city) => {
   const types = city.acts.map(a => a.type);
@@ -35,6 +72,9 @@ const getAvgRating = (city) => {
 
 export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeRegion, setActiveRegion] = useState('All');
+  const [activeVibe, setActiveVibe] = useState(null);
+  const [activeBudget, setActiveBudget] = useState(null);
+  const [voiceFilters, setVoiceFilters] = useState({}); // filters set by voice journey
   const [hovered, setHovered] = useState(null);
 
   // ── Voice card animated height ──
@@ -150,12 +190,48 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
     const trip = vAns[0] || '';
     const region = pickRegionFrom(trip);
     if (region) setActiveRegion(region);
-    const tier = mapBudgetTier(vAns[2] || '');
-    toast(`Profile set — ${tier} tier, showing ${region || 'all'} destinations`);
+    const parsed = parseVoiceFilters(vAns);
+    setVoiceFilters(parsed);
+    if (parsed.vibe) setActiveVibe(parsed.vibe);
+    if (parsed.budget) setActiveBudget(parsed.budget);
     setVIdx(-1); setVAns({});
+    setTimeout(() => {
+      document.querySelector('.explore-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
   };
 
-  const filtered = activeRegion === 'All' ? CITIES : CITIES.filter(c => c.region === activeRegion);
+  const clearAllFilters = () => {
+    setActiveRegion('All');
+    setActiveVibe(null);
+    setActiveBudget(null);
+    setVoiceFilters({});
+  };
+
+  // Apply all active filters + compute match score per city
+  const getMatchScore = (city) => {
+    let score = 0;
+    const vibe = getVibe(city);
+    const price = getStartPrice(city);
+    if (activeVibe && vibe.label === activeVibe) score += 2;
+    if (activeBudget) {
+      const bf = BUDGET_FILTERS.find(b => b.label === activeBudget);
+      if (bf && price <= bf.max) score += 2;
+    }
+    if (activeRegion !== 'All' && city.region === activeRegion) score += 1;
+    return score;
+  };
+
+  const baseFiltered = activeRegion === 'All' ? CITIES : CITIES.filter(c => c.region === activeRegion);
+  const vibeFiltered = activeVibe ? baseFiltered.filter(c => getVibe(c).label === activeVibe) : baseFiltered;
+  const budgetFiltered = activeBudget
+    ? vibeFiltered.filter(c => {
+        const bf = BUDGET_FILTERS.find(b => b.label === activeBudget);
+        return bf ? getStartPrice(c) <= bf.max : true;
+      })
+    : vibeFiltered;
+  // Sort: best matches first
+  const filtered = [...budgetFiltered].sort((a, b) => getMatchScore(b) - getMatchScore(a));
+  const hasActiveFilters = activeRegion !== 'All' || activeVibe || activeBudget;
 
   return (
     <>
@@ -306,19 +382,60 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             </button>
           </div>
 
-          {/* Region Filter */}
-          <div className="region-tabs">
-            {REGIONS.map((r) => (
-              <button
-                key={r.label}
-                className={`region-tab${activeRegion === r.label ? ' active' : ''}`}
-                onClick={() => setActiveRegion(r.label)}
-              >
-                <span className="region-emoji">{r.emoji}</span>
-                {r.label}
-              </button>
-            ))}
+          {/* Voice filter chips — only shown after voice journey */}
+          {Object.keys(voiceFilters).length > 0 && (
+            <div className="voice-filter-strip">
+              <span className="vf-label">🎙 Matched from your answers:</span>
+              {voiceFilters.budget && (
+                <span className="vf-chip">{BUDGET_FILTERS.find(b => b.label === voiceFilters.budget)?.emoji} {voiceFilters.budget}</span>
+              )}
+              {voiceFilters.companion && (
+                <span className="vf-chip">👥 {voiceFilters.companion}</span>
+              )}
+              {voiceFilters.vibe && (
+                <span className="vf-chip">{VIBE_FILTERS.find(v => v.label === voiceFilters.vibe)?.emoji} {voiceFilters.vibe}</span>
+              )}
+              <button className="vf-clear" onClick={clearAllFilters}>✕ Clear</button>
+            </div>
+          )}
+
+          {/* Filter Panel — one row per filter type */}
+          <div className="smart-filter-panel">
+            <div className="sf-row">
+              <span className="sf-group-label">Region</span>
+              {REGIONS.map((r) => (
+                <button key={r.label} className={`sf-chip${activeRegion === r.label ? ' active' : ''}`} onClick={() => setActiveRegion(r.label)}>
+                  {r.emoji} {r.label}
+                </button>
+              ))}
+            </div>
+            <div className="sf-row">
+              <span className="sf-group-label">Vibe</span>
+              {VIBE_FILTERS.map(v => (
+                <button key={v.label} className={`sf-chip${activeVibe === v.label ? ' active' : ''}`} onClick={() => setActiveVibe(activeVibe === v.label ? null : v.label)}>
+                  {v.emoji} {v.label}
+                </button>
+              ))}
+            </div>
+            <div className="sf-row">
+              <span className="sf-group-label">Budget</span>
+              {BUDGET_FILTERS.map(b => (
+                <button key={b.label} className={`sf-chip${activeBudget === b.label ? ' active' : ''}`} onClick={() => setActiveBudget(activeBudget === b.label ? null : b.label)}>
+                  {b.emoji} {b.label}
+                </button>
+              ))}
+              {hasActiveFilters && (
+                <button className="sf-clear-btn" onClick={clearAllFilters}>✕ Clear all</button>
+              )}
+            </div>
           </div>
+
+          {/* Results count */}
+          {hasActiveFilters && (
+            <div className="sf-results-count">
+              Showing <b>{filtered.length}</b> of {CITIES.length} destinations
+            </div>
+          )}
 
           {/* Cards Grid */}
           <div className="dest-grid-new">
@@ -326,9 +443,11 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
               const vibe = getVibe(c);
               const price = getStartPrice(c);
               const rating = getAvgRating(c);
+              const score = getMatchScore(c);
+              const isBestMatch = hasActiveFilters && score >= 3;
               return (
                 <div
-                  className={`dest-card${hovered === c.name ? ' hovered' : ''}`}
+                  className={`dest-card${hovered === c.name ? ' hovered' : ''}${isBestMatch ? ' best-match' : ''}`}
                   key={c.name}
                   onClick={() => openCity(c.name)}
                   onMouseEnter={() => setHovered(c.name)}
@@ -345,7 +464,8 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
                     <div className="dest-card-vibe">
                       <span>{vibe.emoji}</span> {vibe.label}
                     </div>
-                    {rating && (
+                    {isBestMatch && <div className="dest-card-best">⭐ Best match</div>}
+                    {!isBestMatch && rating && (
                       <div className="dest-card-rating">⭐ {rating}</div>
                     )}
                   </div>
