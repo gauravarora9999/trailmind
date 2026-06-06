@@ -356,12 +356,16 @@ export default function AdventurePage({ toast, user }) {
   const [suggestions, setSuggestions] = useState(["I'm ready — let's go! 🚀", "Show me a sample plan first 👁"]);
 
   const bottomRef = useRef(null);
+  const messagesRef = useRef(null);
   const recognRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages]);
 
   const speak = useCallback((text) => {
@@ -618,7 +622,7 @@ export default function AdventurePage({ toast, user }) {
             </div>
           )}
 
-          <div className="adv-messages">
+          <div className="adv-messages" ref={messagesRef}>
             {messages.map((msg, i) => (
               <div key={i} className={`adv-msg-wrap ${msg.role}`}>
                 {msg.role === 'assistant' && <div className="adv-avatar">🏔</div>}
@@ -658,7 +662,6 @@ export default function AdventurePage({ toast, user }) {
                 </div>
               </div>
             )}
-            <div ref={bottomRef} />
           </div>
 
           {suggestions.length > 0 && !loading && (

@@ -589,21 +589,22 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
 
       {/* ── WHY TRAILMIND ── */}
       <div className="why"><div className="wrap">
-        <div className="wh">
-          <h2>Why travellers pick Trailmind</h2>
-          <p className="lead">Every other planner gives the same list to everyone. Trailmind asks who you are first — then prices the whole trip.</p>
+        <div className="why-header">
+          <div className="why-eyebrow">Why Trailmind</div>
+          <h2>Built differently, on purpose</h2>
+          <p className="why-sub">Every other planner gives the same list to everyone. Trailmind asks who you are first — then prices the whole trip.</p>
         </div>
         <div className="why-grid">
           {[
-            { ic: '🎙', t: 'Plan by talking', d: 'Speak five answers and get a complete trip. No forms, no twenty open tabs.', vs: 'vs. manual list-building' },
+            { ic: '🎙️', t: 'Plan by talking', d: 'Speak five answers and get a complete trip. No forms, no twenty open tabs.', vs: 'vs. manual list-building' },
             { ic: '💸', t: 'Real, itemised cost', d: 'Activities, stay, food, transport and buffer — priced per person before you book.', vs: 'vs. "price on request"' },
-            { ic: '🎚', t: 'Budget or luxury', d: 'One tap reshapes the whole trip and its hotels to your spend level.', vs: 'vs. one-size-fits-all' },
+            { ic: '🎚️', t: 'Budget or luxury', d: 'One tap reshapes the whole trip and its hotels to your spend level.', vs: 'vs. one-size-fits-all' },
           ].map((w) => (
             <div className="why-card" key={w.t}>
-              <div className="ic">{w.ic}</div>
+              <div className="why-card-ic">{w.ic}</div>
               <h3>{w.t}</h3>
               <p>{w.d}</p>
-              <div className="vs">{w.vs}</div>
+              <div className="vs">↗ {w.vs}</div>
             </div>
           ))}
         </div>
