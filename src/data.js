@@ -46,7 +46,7 @@ export function placeholderBg(seed) {
 }
 
 // ── Money formatter ──
-export function money(n) { return '$' + n.toLocaleString('en-US'); }
+export function money(n) { return '$' + (n ?? 0).toLocaleString('en-US'); }
 
 // CITIES — 12 cities, 5 activities each
 export const CITIES = [
