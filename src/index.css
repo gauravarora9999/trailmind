@@ -144,6 +144,8 @@ nav.site-nav {
   max-width: 480px; margin: 40px auto 0;
   background: var(--color-dark); border-radius: var(--radius-card-lg);
   padding: 28px; color: #fff; text-align: center;
+  transition: min-height 0.4s ease;
+  overflow: hidden;
 }
 .vc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .live {

@@ -159,8 +159,10 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
             </div>
           </div>
 
-          {/* Voice Card */}
-          <div className="voice-card">
+          {/* Voice Card — min-height drives smooth size transition */}
+          <div className="voice-card" style={{
+            minHeight: vIdx === -1 ? 280 : vIdx === 5 ? 420 : 400
+          }}>
             <div className="vc-top">
               <span className="ttl">✦ Trailmind Voice</span>
               {listening && <span className="live">LISTENING</span>}
