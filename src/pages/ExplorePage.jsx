@@ -43,50 +43,69 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [inputVal, setInputVal] = useState('');
-  const recognRef = useRef(null);
   const synthRef = useRef(null);
+  // Use refs to avoid stale closure in SpeechRecognition callbacks
+  const vIdxRef = useRef(-1);
+  const answerRef = useRef(null);
 
   useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SR) {
-      const recog = new SR();
-      recog.lang = 'en-US';
-      recog.interimResults = true;
-      recog.onresult = (e) => {
-        const text = Array.from(e.results).map(r => r[0].transcript).join('');
-        setTranscript(text);
-        if (e.results[e.results.length - 1].isFinal) answer(text);
-      };
-      recog.onend = () => setListening(false);
-      recognRef.current = recog;
-    }
     synthRef.current = window.speechSynthesis || null;
   }, []);
 
+  // Keep vIdxRef in sync
+  useEffect(() => { vIdxRef.current = vIdx; }, [vIdx]);
+
   const speak = (text) => {
     if (synthRef.current) {
+      synthRef.current.cancel();
       const utt = new SpeechSynthesisUtterance(text);
       utt.rate = 1.05;
       synthRef.current.speak(utt);
     }
   };
 
-  const orbTap = () => {
-    if (vIdx === -1) { setVIdx(0); speak(VQ[0].q); return; }
-    if (recognRef.current && !listening) {
-      setListening(true); setTranscript('');
-      try { recognRef.current.start(); } catch (_) {}
+  const answer = (text) => {
+    const currentIdx = vIdxRef.current;
+    if (currentIdx < 0 || currentIdx >= VQ.length) return;
+    setVAns((prev) => ({ ...prev, [currentIdx]: text }));
+    setTranscript(''); setInputVal(''); setListening(false);
+    const next = currentIdx + 1;
+    if (next < VQ.length) {
+      setVIdx(next);
+      speak(VQ[next].q);
+    } else {
+      setVIdx(5);
+      speak('Great! Here is your travel profile.');
     }
   };
 
-  const answer = (text) => {
-    if (vIdx < 0 || vIdx >= VQ.length) return;
-    setVAns((prev) => ({ ...prev, [vIdx]: text }));
-    setTranscript(''); setInputVal(''); setListening(false);
-    if (recognRef.current) try { recognRef.current.stop(); } catch (_) {}
-    const next = vIdx + 1;
-    if (next < VQ.length) { setVIdx(next); speak(VQ[next].q); }
-    else { setVIdx(5); speak('Great! Here is your travel profile.'); }
+  // Store latest answer in ref so recognition callback always uses fresh version
+  useEffect(() => { answerRef.current = answer; });
+
+  const orbTap = () => {
+    if (vIdxRef.current === -1) { setVIdx(0); speak(VQ[0].q); return; }
+    if (listening) return;
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { toast('Voice not supported in this browser'); return; }
+
+    // Create a fresh recognition instance each time to avoid state issues
+    const recog = new SR();
+    recog.lang = 'en-US';
+    recog.interimResults = true;
+    recog.onresult = (e) => {
+      const text = Array.from(e.results).map(r => r[0].transcript).join('');
+      setTranscript(text);
+      if (e.results[e.results.length - 1].isFinal) {
+        recog.stop();
+        answerRef.current(text);
+      }
+    };
+    recog.onend = () => setListening(false);
+    recog.onerror = () => setListening(false);
+    setListening(true);
+    setTranscript('');
+    recog.start();
   };
 
   const handleInputKey = (e) => {

@@ -127,11 +127,17 @@ nav.site-nav {
 }
 .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .pill-stat {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 16px; border-radius: var(--radius-pill);
+  display: inline-flex; align-items: center; gap: 0;
+  padding: 8px 20px; border-radius: var(--radius-pill);
   background: var(--color-stats); font-size: 13px; font-weight: 600;
   color: var(--color-ink); margin-top: 28px;
 }
+.pill-stat div {
+  padding: 0 16px;
+  border-right: 1px solid rgba(0,0,0,0.1);
+}
+.pill-stat div:last-child { border-right: none; }
+.pill-stat b { color: var(--color-coral); margin-right: 4px; }
 
 /* Voice Card */
 .voice-card {
