@@ -17,7 +17,6 @@ export default function Footer({ showExplore, showPlanner, showAbout, showContac
 
         <div className="ft-col">
           <h4>Company</h4>
-          <a onClick={showAbout} style={{ cursor: 'pointer' }}>About us</a>
           <a onClick={showContact} style={{ cursor: 'pointer' }}>Contact</a>
         </div>
 

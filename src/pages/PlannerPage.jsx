@@ -259,6 +259,14 @@ export default function PlannerPage({
           </div>
         )}
 
+        {generating && (
+          <div className="plan-skeleton" style={{ marginTop: 24 }}>
+            {[90, 70, 85, 60, 75].map((w, i) => (
+              <div key={i} className="plan-skeleton-bar" style={{ width: `${w}%` }} />
+            ))}
+          </div>
+        )}
+
         {plan && !generating && (
           <div className="pl-out">
             <div className="pl-top">
@@ -382,6 +390,11 @@ export default function PlannerPage({
                     setSaving(false);
                   }
                 }}>{saved ? '✓ Saved!' : saving ? 'Saving...' : 'Save this trip'}</button>
+                {saved && (
+                  <a href="/my-trips" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-line)', marginTop: 8, fontSize: 13, textDecoration: 'none' }}>
+                    View in My Trips →
+                  </a>
+                )}
                 <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-line)', marginTop: 10, opacity: exporting ? 0.6 : 1 }} disabled={exporting} onClick={exportPDF}>{exporting ? 'Generating PDF...' : 'Export as PDF'}</button>
 
                 {aiInsights?.dining && aiInsights.dining.length > 0 && (

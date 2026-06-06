@@ -37,7 +37,6 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
             Adventure AI
           </a>
           {user && link('My Trips', showMyTrips, '/my-trips')}
-          {link('About', showAbout, '/about')}
         </div>
 
         <div className="nav-cta">
@@ -72,7 +71,6 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
             Adventure AI
           </a>
           {user && link('My Trips', showMyTrips, '/my-trips')}
-          {link('About', showAbout, '/about')}
           <div className="mobile-auth">
             {user ? (
               <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', border: '1px solid var(--color-line)' }} onClick={() => { logout(); setMenuOpen(false); }}>Log out</button>

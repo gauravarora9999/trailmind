@@ -497,7 +497,14 @@ export default function AdventurePage({ toast, user }) {
         plan: data.plan,
       };
 
-      setMessages(prev => [...prev, planMsg]);
+      const ctaMsg = {
+        role: 'assistant',
+        content: '✅ Your plan has been saved to My Trips. You can access it anytime from your account.',
+        action: 'show_cta',
+        profile: null, plan: null,
+      };
+
+      setMessages(prev => [...prev, planMsg, ctaMsg]);
       speak(planMsg.content);
       saveToSupabase(currentProfile);
     } catch (e) {
@@ -624,6 +631,13 @@ export default function AdventurePage({ toast, user }) {
                   )}
                   {msg.action === 'show_plan' && msg.plan && (
                     <PlanCard plan={msg.plan} />
+                  )}
+                  {msg.action === 'show_cta' && (
+                    <div className="adv-plan-cta">
+                      <a href="/my-trips" className="btn btn-coral" style={{ fontSize: 13, padding: '8px 20px', textDecoration: 'none' }}>
+                        View in My Trips →
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>
