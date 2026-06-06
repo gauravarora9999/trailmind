@@ -77,6 +77,13 @@ const getAvgRating = (city) => {
   return (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
 };
 
+const HERO_TAGLINES = [
+  'Make the best days of your life.',
+  'Turn “someday” into a date on the calendar.',
+  'Adventure, minus the spreadsheets.',
+  'Your story — beautifully planned.',
+];
+
 export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeRegion, setActiveRegion] = useState('All');
   const [activeVibe, setActiveVibe] = useState(null);
@@ -84,6 +91,70 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
   const [activeDuration, setActiveDuration] = useState(null);
   const [voiceFilters, setVoiceFilters] = useState({});
   const [hovered, setHovered] = useState(null);
+
+  // ── Cinematic hero: rotating tagline + ambient sound ──
+  const [taglineIdx, setTaglineIdx] = useState(0);
+  const [soundOn, setSoundOn] = useState(false);
+  const ambientRef = useRef(null);
+
+  useEffect(() => {
+    const t = setInterval(() => setTaglineIdx(i => (i + 1) % HERO_TAGLINES.length), 3400);
+    return () => clearInterval(t);
+  }, []);
+
+  const startAmbient = () => {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const master = ctx.createGain();
+    master.gain.value = 0;
+    master.connect(ctx.destination);
+    master.gain.linearRampToValueAtTime(0.16, ctx.currentTime + 2.2);
+    const chord = [220, 277.18, 329.63, 440];
+    const oscs = chord.map((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = i === 0 ? 'sine' : 'triangle';
+      o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.value = (i === 0 ? 0.10 : 0.05);
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 900;
+      o.connect(g); g.connect(lp); lp.connect(master);
+      o.start();
+      return o;
+    });
+    const notes = [587.33, 659.25, 783.99, 880, 987.77];
+    const melodyTimer = setInterval(() => {
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = notes[Math.floor(Math.random() * notes.length)];
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.09, t + 0.06);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + 2.5);
+    }, 2700);
+    ambientRef.current = { ctx, oscs, master, melodyTimer };
+  };
+
+  const stopAmbient = () => {
+    const a = ambientRef.current;
+    if (!a) return;
+    clearInterval(a.melodyTimer);
+    try { a.master.gain.linearRampToValueAtTime(0, a.ctx.currentTime + 0.6); } catch (_) {}
+    setTimeout(() => { try { a.oscs.forEach(o => o.stop()); a.ctx.close(); } catch (_) {} }, 700);
+    ambientRef.current = null;
+  };
+
+  const toggleSound = () => {
+    if (soundOn) { stopAmbient(); setSoundOn(false); }
+    else { startAmbient(); setSoundOn(true); }
+  };
+
+  useEffect(() => () => stopAmbient(), []);
 
   // ── Voice card animated height ──
   const [cardHeight, setCardHeight] = useState(null);
@@ -244,10 +315,26 @@ export default function ExplorePage({ openCity, showPlanner, toast }) {
   return (
     <>
       {/* ── HERO ── */}
-      <section className="hero-home">
+      <section className="hero-home hero-cinematic">
+        <div className="hero-bg" aria-hidden="true">
+          <video className="hero-video" autoPlay muted loop playsInline poster="https://assets.mixkit.co/videos/44370/44370-thumb-720-0.jpg">
+            <source src="https://assets.mixkit.co/videos/44370/44370-720.mp4" type="video/mp4" />
+            <source src="https://assets.mixkit.co/videos/44370/44370-360.mp4" type="video/mp4" />
+          </video>
+          <div className="hero-scrim" />
+        </div>
+
+        <button className={`hero-sound${soundOn ? ' on' : ''}`} onClick={toggleSound} aria-label={soundOn ? 'Mute ambient music' : 'Play ambient music'} title={soundOn ? 'Mute ambient music' : 'Play ambient music'}>
+          <span className="hs-ico">{soundOn ? '♪' : '🔇'}</span>
+          <span className="hs-bars" aria-hidden="true"><i /><i /><i /><i /></span>
+          <span className="hs-txt">{soundOn ? 'Sound on' : 'Sound off'}</span>
+        </button>
+
         <div className="wrap hero-in">
           <div>
+            <div className="hero-kicker">✦ AI travel concierge</div>
             <h1>Just <span className="hl">talk</span>.<br />We'll plan the whole adventure.</h1>
+            <p className="hero-rotator" key={taglineIdx}>{HERO_TAGLINES[taglineIdx]}</p>
             <p className="sub">No forms. Tell Trailmind where you're dreaming of and how you like to travel — it builds a costed, day-by-day trip in under two minutes.</p>
             <div className="hero-cta">
               <button className="btn btn-coral" onClick={orbTap}>🎙 Start talking</button>

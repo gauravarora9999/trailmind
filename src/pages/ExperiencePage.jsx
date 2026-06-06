@@ -134,6 +134,15 @@ export default function ExperiencePage({ toast, user, showExplore }) {
             <div className="xc-result" style={{ marginTop: 34 }}>
               <div className="rstage" style={{ background: placeholderBg(result.q), minHeight: 380, position: 'relative' }}>
                 <img src={img(result.q)} alt={result.t} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.display = 'none'; }} />
+                <span className="tag" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }}>&#10022; AI PREVIEW</span>
+                {avatars.length > 0 && (
+                  <div className="scene-faces">
+                    {avatars.slice(0, 4).map((a, i) => (
+                      <img key={i} src={a.src} alt={i === 0 ? 'You' : 'Guest ' + i} />
+                    ))}
+                    <span>Your crew, placed in this scene</span>
+                  </div>
+                )}
               </div>
               <div className="rcaption">
                 <div>
