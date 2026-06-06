@@ -570,7 +570,7 @@ export default function AdventurePage({ toast, user }) {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
-              placeholder={planGenerated ? 'Ask to refine your plan...' : listening ? 'Listening…' : 'Tell me about yourself and your dream adventure…'}
+              placeholder={listening ? 'Listening…' : planGenerated ? 'Ask to refine your plan…' : messages.length <= 1 ? 'Tell me about yourself and your dream adventure…' : 'Type your answer…'}
               disabled={loading || listening}
             />
             <button className="btn btn-coral adv-send-btn" onClick={() => sendMessage(input)} disabled={loading || !input.trim()}>
