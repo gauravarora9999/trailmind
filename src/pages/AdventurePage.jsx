@@ -274,6 +274,7 @@ export default function AdventurePage({ toast, user }) {
   const [fieldProgress, setFieldProgress] = useState(0);
   const [showDemo, setShowDemo] = useState(false);
   const [planGenerated, setPlanGenerated] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   const bottomRef = useRef(null);
   const synthRef = useRef(window.speechSynthesis);
@@ -341,6 +342,7 @@ export default function AdventurePage({ toast, user }) {
       }
       setMessages(prev => [...prev, aiMsg]);
       speak(data.message || '');
+      setSuggestions(data.suggestions || []);
       if (data.action === 'show_plan' && data.profile) saveToSupabase(data.profile);
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Try again.', action: null, profile: null, plan: null }]);
@@ -545,6 +547,19 @@ export default function AdventurePage({ toast, user }) {
             )}
             <div ref={bottomRef} />
           </div>
+
+          {suggestions.length > 0 && !loading && !planGenerated && (
+            <div className="adv-suggestions">
+              {suggestions.map((s, i) => (
+                <button key={i} className="adv-suggestion-chip" onClick={() => {
+                  setSuggestions([]);
+                  sendMessage(s);
+                }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="adv-input-row">
             <button className={`adv-mic-btn ${listening ? 'active' : ''}`} onClick={toggleVoice}>

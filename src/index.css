@@ -2123,3 +2123,32 @@ footer.site-footer {
   .pr-dim-label { width: 90px; }
   .pac-name { font-size: 14px; }
 }
+
+/* Adventure AI suggestion chips */
+.adv-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid #f0f0f4;
+  background: #fafafa;
+  flex-shrink: 0;
+}
+.adv-suggestion-chip {
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1.5px solid #e0e0e8;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.adv-suggestion-chip:hover {
+  border-color: #e05a2b;
+  color: #e05a2b;
+  background: #fff8f5;
+}
