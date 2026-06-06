@@ -1872,3 +1872,9 @@ footer.site-footer {
 @media (max-width: 600px) {
   .sf-group-label { min-width: 44px; font-size: 10px; }
 }
+
+/* Duration chip desc label */
+.sf-chip-desc {
+  font-size: 10px; font-weight: 500; opacity: 0.6; margin-left: 2px;
+}
+.sf-chip.active .sf-chip-desc { opacity: 0.8; }
