@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { supabase } from './supabase.js';
 
 import Nav from './components/Nav.jsx';
@@ -10,15 +11,12 @@ import VoiceAssist from './components/VoiceAssist.jsx';
 import ExplorePage from './pages/ExplorePage.jsx';
 import CityPage from './pages/CityPage.jsx';
 import PlannerPage from './pages/PlannerPage.jsx';
-import ExperiencePage from './pages/ExperiencePage.jsx';
-import VoicePage from './pages/VoicePage.jsx';
+import MyTripsPage from './pages/MyTripsPage.jsx';
 import AboutPage from './pages/AboutPage.jsx';
 import ContactPage from './pages/ContactPage.jsx';
-import AdventurePage from './pages/AdventurePage.jsx';
-import SavedTripsPage from './pages/SavedTripsPage.jsx';
 
 export default function App() {
-  const [page, setPage] = useState('explore');
+  const navigate = useNavigate();
   const [cityName, setCityName] = useState('');
   const [trip, setTrip] = useState([]);
   const [tripTier, setTripTier] = useState('Mid-range');
@@ -75,22 +73,19 @@ export default function App() {
 
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  const showExplore = () => { setPage('explore'); scrollTop(); };
-  const openCity = (name) => { setCityName(name); setTrip([]); setTripTier('Mid-range'); setPage('city'); scrollTop(); };
-  const showPlanner = () => { setPlannerSelections([]); setPage('planner'); scrollTop(); };
+  const showExplore = () => { navigate('/'); scrollTop(); };
+  const openCity = (name) => { setCityName(name); setTrip([]); setTripTier('Mid-range'); navigate('/city/' + encodeURIComponent(name)); scrollTop(); };
+  const showPlanner = () => { setPlannerSelections([]); navigate('/planner'); scrollTop(); };
   const openPlanner = (city, selections, tier) => {
     setPlannerCity(city);
     setPlannerSelections(selections || []);
     setPlannerTier(tier || 'Mid-range');
-    setPage('planner');
+    navigate('/planner');
     scrollTop();
   };
-  const showExperience = () => { setPage('experience'); scrollTop(); };
-  const showVoicePage = () => { setPage('voice'); scrollTop(); };
-  const showAdventure = () => { setPage('adventure'); scrollTop(); };
-  const showSavedTrips = () => { setPage('saved'); scrollTop(); };
-  const showAbout = () => { setPage('about'); scrollTop(); };
-  const showContact = () => { setPage('contact'); scrollTop(); };
+  const showAbout = () => { navigate('/about'); scrollTop(); };
+  const showContact = () => { navigate('/contact'); scrollTop(); };
+  const showMyTrips = () => { navigate('/my-trips'); scrollTop(); };
 
   const openAuth = (mode) => setAuthMode(mode);
   const closeAuth = () => setAuthMode(null);
@@ -107,78 +102,68 @@ export default function App() {
     openPlanner(city, selections, tier);
   };
 
-  const navFns = { showExplore, showPlanner, showExperience, showVoicePage, showAdventure, showSavedTrips, showAbout, showContact };
-
   return (
     <>
-      <Nav {...navFns} user={user} openAuth={openAuth} logout={logout} />
+      <Nav
+        showExplore={showExplore}
+        showPlanner={showPlanner}
+        showAbout={showAbout}
+        showMyTrips={showMyTrips}
+        user={user}
+        openAuth={openAuth}
+        logout={logout}
+      />
 
-      {page === 'explore' && (
-        <ExplorePage
-          openCity={openCity}
-          showPlanner={showPlanner}
-          showVoicePage={showVoicePage}
-          toast={toast}
-        />
-      )}
-
-      {page === 'city' && (
-        <CityPage
-          cityName={cityName}
-          trip={trip}
-          tripTier={tripTier}
-          onTierChange={setTripTier}
-          onToggleAct={onToggleAct}
-          onRemoveTrip={onRemoveTrip}
-          onPlanTrip={onPlanTrip}
-          showExplore={showExplore}
-          toast={toast}
-        />
-      )}
-
-      {page === 'planner' && (
-        <PlannerPage
-          plannerCity={plannerCity}
-          plannerTier={plannerTier}
-          plannerPax={plannerPax}
-          plannerSelections={plannerSelections}
-          setPlannerCity={setPlannerCity}
-          setPlannerTier={setPlannerTier}
-          setPlannerPax={setPlannerPax}
-          showExplore={showExplore}
-          toast={toast}
-          user={user}
-        />
-      )}
-
-      {page === 'experience' && (
-        <ExperiencePage toast={toast} user={user} showExplore={showExplore} />
-      )}
-
-      {page === 'voice' && (
-        <VoicePage
-          openPlanner={openPlanner}
-          showExplore={showExplore}
-          toast={toast}
-          user={user}
-        />
-      )}
-
-      {page === 'adventure' && (
-        <AdventurePage toast={toast} user={user} />
-      )}
-
-      {page === 'saved' && (
-        <SavedTripsPage user={user} openAuth={openAuth} showPlanner={showPlanner} showAdventure={showAdventure} />
-      )}
-
-      {page === 'about' && (
-        <AboutPage showContact={showContact} />
-      )}
-
-      {page === 'contact' && (
-        <ContactPage toast={toast} />
-      )}
+      <Routes>
+        <Route path="/" element={
+          <ExplorePage
+            openCity={openCity}
+            showPlanner={showPlanner}
+            toast={toast}
+          />
+        } />
+        <Route path="/city/:name" element={
+          <CityPage
+            cityName={cityName}
+            trip={trip}
+            tripTier={tripTier}
+            onTierChange={setTripTier}
+            onToggleAct={onToggleAct}
+            onRemoveTrip={onRemoveTrip}
+            onPlanTrip={onPlanTrip}
+            showExplore={showExplore}
+            toast={toast}
+          />
+        } />
+        <Route path="/planner" element={
+          <PlannerPage
+            plannerCity={plannerCity}
+            plannerTier={plannerTier}
+            plannerPax={plannerPax}
+            plannerSelections={plannerSelections}
+            setPlannerCity={setPlannerCity}
+            setPlannerTier={setPlannerTier}
+            setPlannerPax={setPlannerPax}
+            showExplore={showExplore}
+            toast={toast}
+            user={user}
+          />
+        } />
+        <Route path="/my-trips" element={
+          <MyTripsPage
+            user={user}
+            toast={toast}
+            showExplore={showExplore}
+            openPlanner={openPlanner}
+          />
+        } />
+        <Route path="/about" element={
+          <AboutPage showContact={showContact} />
+        } />
+        <Route path="/contact" element={
+          <ContactPage toast={toast} />
+        } />
+      </Routes>
 
       {authMode && (
         <AuthModal
@@ -192,11 +177,14 @@ export default function App() {
         open={assistOpen}
         onToggle={() => setAssistOpen(o => !o)}
         showPlanner={showPlanner}
-        showExperience={showExperience}
-        showVoicePage={showVoicePage}
       />
 
-      <Footer {...navFns} />
+      <Footer
+        showExplore={showExplore}
+        showPlanner={showPlanner}
+        showAbout={showAbout}
+        showContact={showContact}
+      />
 
       <Toast msg={toastMsg} />
     </>
