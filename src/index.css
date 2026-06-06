@@ -2005,3 +2005,8 @@ footer.site-footer {
   .mt-grid { grid-template-columns: 1fr; }
   .trip-detail-stats { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* Clickable trip card */
+.mt-card-clickable { cursor: pointer; }
+.mt-card-clickable:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.mt-view-hint { font-size: 12px; font-weight: 700; color: var(--color-coral); }

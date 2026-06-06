@@ -167,7 +167,7 @@ export default function MyTripsPage({ user, toast, showExplore, openPlanner }) {
           ) : (
             <div className="mt-grid">
               {trips.map(t => (
-                <div key={t.id} className="mt-card">
+                <div key={t.id} className="mt-card mt-card-clickable" onClick={() => setViewingTrip(t)}>
                   <div className="mt-card-header">
                     <div>
                       <div className="mt-city">{t.city_name}</div>
@@ -185,8 +185,8 @@ export default function MyTripsPage({ user, toast, showExplore, openPlanner }) {
                   <div className="mt-card-footer">
                     <span className="mt-date">{new Date(t.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     <div className="mt-actions">
-                      <button className="mt-btn-view" onClick={() => setViewingTrip(t)}>View plan</button>
-                      <button className="mt-btn-delete" onClick={() => deleteTrip(t.id)}>Delete</button>
+                      <span className="mt-view-hint">Tap to view plan →</span>
+                      <button className="mt-btn-delete" onClick={e => { e.stopPropagation(); deleteTrip(t.id); }}>Delete</button>
                     </div>
                   </div>
                 </div>
