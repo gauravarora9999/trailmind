@@ -27,8 +27,7 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
 
         <div className="nav-links">
           {link('Explore', showExplore, '/')}
-          {link('AI Planner', showPlanner, '/planner')}
-          {link('Plan by Voice', showVoicePage, '/voice')}
+          {link('Trip Planner', showPlanner, '/planner')}
           {link('Experience', showExperience, '/experience')}
           <a
             onClick={() => go(showAdventure)}
@@ -64,8 +63,7 @@ export default function Nav({ showExplore, showPlanner, showAbout, showMyTrips, 
       {menuOpen && (
         <div className="mobile-menu">
           {link('Explore', showExplore, '/')}
-          {link('AI Planner', showPlanner, '/planner')}
-          {link('Plan by Voice', showVoicePage, '/voice')}
+          {link('Trip Planner', showPlanner, '/planner')}
           {link('Experience', showExperience, '/experience')}
           <a
             onClick={() => go(showAdventure)}
